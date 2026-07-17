@@ -12,6 +12,7 @@ import logging
 from datetime import datetime, timezone
 
 from cogs.format_utils import send_jamie_embeds
+from llm.client import JAMIE_SYSTEM_PROMPT
 
 log = logging.getLogger("jamie.chat")
 
@@ -536,7 +537,7 @@ class ChatCog(commands.Cog):
             user_context = await db.build_user_context(message.author.id, guild.id)
             conversation_context = await db.build_conversation_context(message.channel.id, limit=15)
             
-            system = f"{llm.JAMIE_SYSTEM_PROMPT}\n\n[Active Guild ID: {guild.id}]"
+            system = f"{JAMIE_SYSTEM_PROMPT}\n\n[Active Guild ID: {guild.id}]"
             if user_context:
                 system += f"\n\n--- USER CONTEXT ---\n{user_context}"
             if conversation_context:
