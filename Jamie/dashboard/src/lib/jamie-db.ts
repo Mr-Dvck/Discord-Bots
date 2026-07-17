@@ -60,7 +60,7 @@ type DbSync = {
 
 function openDb(opts?: { mustExist?: boolean }) {
   // eslint-disable-next-line @typescript-eslint/no-require-imports
-  const { DatabaseSync } = require("node:sqlite") as {
+  const { DatabaseSync } = eval("require")("node:sqlite") as {
     DatabaseSync: new (path: string, opts?: { readOnly?: boolean }) => DbSync;
   };
 
