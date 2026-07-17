@@ -1,0 +1,239 @@
+@import "tailwindcss";
+
+:root {
+  --bg: #0f1418;
+  --surface: #151c21;
+  --surface2: #1b242b;
+  --surface3: #22303a;
+  --text: #e8f0f4;
+  --muted: #9fb1bb;
+  --faint: #6e808a;
+  --line: #2e3d48;
+  --primary: #39b7c4;
+  --primary-dim: rgba(57, 183, 196, 0.12);
+  --accent: #7dd3a7;
+  --accent-dim: rgba(125, 211, 167, 0.14);
+  --warn: #f0b35a;
+  --warn-dim: rgba(240, 179, 90, 0.14);
+  --premium: #d98aff;
+  --premium-dim: rgba(217, 138, 255, 0.14);
+  --danger: #f04747;
+  --danger-dim: rgba(240, 71, 71, 0.14);
+  --radius: 12px;
+  --radius-sm: 8px;
+  --radius-lg: 16px;
+  --shadow: 0 8px 24px rgba(0, 0, 0, 0.28);
+}
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html,
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: "Inter", ui-sans-serif, system-ui, -apple-system, sans-serif;
+  font-size: 14px;
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* Scrollbar */
+::-webkit-scrollbar {
+  width: 6px;
+}
+::-webkit-scrollbar-track {
+  background: var(--surface);
+}
+::-webkit-scrollbar-thumb {
+  background: var(--line);
+  border-radius: 3px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: var(--faint);
+}
+
+/* Utility classes */
+.card {
+  background: linear-gradient(180deg, var(--surface), var(--surface2));
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  padding: 20px;
+}
+
+.card-sm {
+  background: var(--surface2);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-sm);
+  padding: 14px;
+}
+
+.badge {
+  display: inline-block;
+  padding: 3px 8px;
+  border-radius: 999px;
+  font-size: 0.72rem;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  border: 1px solid var(--line);
+}
+
+.badge-core {
+  background: var(--accent-dim);
+  color: #aef0c8;
+}
+.badge-standard {
+  background: var(--primary-dim);
+  color: #8fe7ef;
+}
+.badge-premium {
+  background: var(--premium-dim);
+  color: #e7b8ff;
+}
+.badge-warn {
+  background: var(--warn-dim);
+  color: #ffd495;
+}
+.badge-danger {
+  background: var(--danger-dim);
+  color: #ff8f8f;
+}
+
+.btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 16px;
+  border-radius: var(--radius-sm);
+  font-size: 0.85rem;
+  font-weight: 600;
+  cursor: pointer;
+  border: 1px solid var(--line);
+  transition: all 0.15s ease;
+}
+
+.btn-primary {
+  background: var(--primary);
+  color: #0f1418;
+  border-color: var(--primary);
+}
+.btn-primary:hover {
+  filter: brightness(1.15);
+}
+
+.btn-accent {
+  background: var(--accent);
+  color: #0f1418;
+  border-color: var(--accent);
+}
+.btn-accent:hover {
+  filter: brightness(1.15);
+}
+
+.btn-ghost {
+  background: transparent;
+  color: var(--muted);
+}
+.btn-ghost:hover {
+  background: var(--surface3);
+  color: var(--text);
+}
+
+.btn-danger {
+  background: var(--danger-dim);
+  color: #ff8f8f;
+  border-color: rgba(240, 71, 71, 0.3);
+}
+.btn-danger:hover {
+  background: rgba(240, 71, 71, 0.25);
+}
+
+.input {
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-sm);
+  padding: 10px 14px;
+  color: var(--text);
+  font-size: 0.9rem;
+  width: 100%;
+  outline: none;
+  transition: border-color 0.15s;
+}
+.input:focus {
+  border-color: var(--primary);
+}
+.input::placeholder {
+  color: var(--faint);
+}
+
+.select {
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-sm);
+  padding: 10px 14px;
+  color: var(--text);
+  font-size: 0.9rem;
+  width: 100%;
+  outline: none;
+  cursor: pointer;
+}
+.select:focus {
+  border-color: var(--primary);
+}
+
+.toggle {
+  position: relative;
+  width: 44px;
+  height: 24px;
+  background: var(--line);
+  border-radius: 12px;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+.toggle.active {
+  background: var(--primary);
+}
+.toggle::after {
+  content: "";
+  position: absolute;
+  top: 3px;
+  left: 3px;
+  width: 18px;
+  height: 18px;
+  background: var(--text);
+  border-radius: 50%;
+  transition: transform 0.2s;
+}
+.toggle.active::after {
+  transform: translateX(20px);
+}
+
+/* Animations */
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes slideUp {
+  from { opacity: 0; transform: translateY(20px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.5; }
+}
+
+.animate-fade {
+  animation: fadeIn 0.3s ease;
+}
+.animate-slide {
+  animation: slideUp 0.4s ease;
+}
+.animate-pulse {
+  animation: pulse 2s infinite;
+}

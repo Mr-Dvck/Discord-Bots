@@ -1,0 +1,7 @@
+# Jamie Discord Bot
+data/
+venv/
+__pycache__/
+*.pyc
+.env
+*.db
