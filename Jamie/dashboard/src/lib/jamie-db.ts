@@ -46,28 +46,171 @@ function resolveDbPath(): string {
   return candidates[0] || path.join(process.cwd(), "..", "data", "jamie.db");
 }
 
-function openDb() {
+type Stmt = {
+  all: (...params: unknown[]) => Record<string, unknown>[];
+  get: (...params: unknown[]) => Record<string, unknown> | undefined;
+  run: (...params: unknown[]) => { changes: number };
+};
+
+type DbSync = {
+  prepare: (sql: string) => Stmt;
+  exec: (sql: string) => void;
+  close: () => void;
+};
+
+function openDb(opts?: { mustExist?: boolean }) {
   // eslint-disable-next-line @typescript-eslint/no-require-imports
   const { DatabaseSync } = require("node:sqlite") as {
-    DatabaseSync: new (path: string, opts?: { readOnly?: boolean }) => {
-      prepare: (sql: string) => {
-        all: (...params: unknown[]) => Record<string, unknown>[];
-        get: (...params: unknown[]) => Record<string, unknown> | undefined;
-      };
-      close: () => void;
-    };
+    DatabaseSync: new (path: string, opts?: { readOnly?: boolean }) => DbSync;
   };
 
   const dbPath = resolveDbPath();
   if (!fs.existsSync(dbPath)) {
-    throw new Error(
-      `Jamie database not found at ${dbPath}. Run the Discord bot and talk in-server so memory is written.`
-    );
+    if (opts?.mustExist === false) {
+      fs.mkdirSync(path.dirname(dbPath), { recursive: true });
+    } else {
+      throw new Error(
+        `Jamie database not found at ${dbPath}. Run the Discord bot first so data/jamie.db exists.`
+      );
+    }
   }
 
-  // readOnly may fail if file locked for write by bot — open normal and only SELECT
   const db = new DatabaseSync(dbPath);
   return { db, dbPath };
+}
+
+function ensureWelcomeTable(db: DbSync) {
+  db.exec(`
+    CREATE TABLE IF NOT EXISTS welcome_config (
+      guild_id       INTEGER PRIMARY KEY,
+      enabled        INTEGER DEFAULT 0,
+      channel_id     INTEGER,
+      message        TEXT DEFAULT 'Welcome {user} — you are now Certified.',
+      image_line     TEXT DEFAULT 'is now Certified',
+      show_avatar    INTEGER DEFAULT 0,
+      dm_on_join     INTEGER DEFAULT 0,
+      background_path TEXT DEFAULT ''
+    );
+  `);
+}
+
+export type WelcomeConfig = {
+  guild_id: string;
+  enabled: boolean;
+  channel_id: string | null;
+  message: string;
+  image_line: string;
+  dm_on_join: boolean;
+  background_path: string;
+};
+
+const WELCOME_DEFAULTS = {
+  enabled: false,
+  channel_id: null as string | null,
+  message: "Welcome {user} — you are now Certified.",
+  image_line: "is now Certified",
+  dm_on_join: false,
+  background_path: "",
+};
+
+function mapWelcome(row: Record<string, unknown> | undefined, guildId: string): WelcomeConfig {
+  if (!row) {
+    return { guild_id: String(guildId), ...WELCOME_DEFAULTS };
+  }
+  return {
+    guild_id: String(row.guild_id ?? guildId),
+    enabled: Boolean(Number(row.enabled ?? 0)),
+    channel_id: row.channel_id != null && row.channel_id !== "" ? String(row.channel_id) : null,
+    message: String(row.message ?? WELCOME_DEFAULTS.message),
+    image_line: String(row.image_line ?? WELCOME_DEFAULTS.image_line),
+    dm_on_join: Boolean(Number(row.dm_on_join ?? 0)),
+    background_path: String(row.background_path ?? ""),
+  };
+}
+
+export function getWelcomeConfig(guildId: string): WelcomeConfig {
+  const { db } = openDb();
+  try {
+    ensureWelcomeTable(db);
+    const row = db
+      .prepare(
+        `SELECT CAST(guild_id AS TEXT) as guild_id,
+                enabled,
+                CAST(channel_id AS TEXT) as channel_id,
+                message, image_line, dm_on_join, background_path
+         FROM welcome_config WHERE CAST(guild_id AS TEXT) = ?`
+      )
+      .get(String(guildId));
+    return mapWelcome(row, guildId);
+  } finally {
+    db.close();
+  }
+}
+
+export function setWelcomeConfig(
+  guildId: string,
+  patch: Partial<Omit<WelcomeConfig, "guild_id">>
+): WelcomeConfig {
+  const { db } = openDb();
+  try {
+    ensureWelcomeTable(db);
+    const current = mapWelcome(
+      db
+        .prepare(
+          `SELECT CAST(guild_id AS TEXT) as guild_id,
+                  enabled,
+                  CAST(channel_id AS TEXT) as channel_id,
+                  message, image_line, dm_on_join, background_path
+           FROM welcome_config WHERE CAST(guild_id AS TEXT) = ?`
+        )
+        .get(String(guildId)),
+      guildId
+    );
+
+    const next: WelcomeConfig = {
+      guild_id: String(guildId),
+      enabled: patch.enabled ?? current.enabled,
+      channel_id:
+        patch.channel_id !== undefined ? patch.channel_id : current.channel_id,
+      message: patch.message ?? current.message,
+      image_line: patch.image_line ?? current.image_line,
+      dm_on_join: patch.dm_on_join ?? current.dm_on_join,
+      background_path:
+        patch.background_path !== undefined
+          ? patch.background_path
+          : current.background_path,
+    };
+
+    db.prepare(
+      `INSERT INTO welcome_config
+         (guild_id, enabled, channel_id, message, image_line, show_avatar, dm_on_join, background_path)
+       VALUES (?, ?, ?, ?, ?, 0, ?, ?)
+       ON CONFLICT(guild_id) DO UPDATE SET
+         enabled = excluded.enabled,
+         channel_id = excluded.channel_id,
+         message = excluded.message,
+         image_line = excluded.image_line,
+         show_avatar = 0,
+         dm_on_join = excluded.dm_on_join,
+         background_path = excluded.background_path`
+    ).run(
+      String(guildId),
+      next.enabled ? 1 : 0,
+      next.channel_id ? String(next.channel_id) : null,
+      next.message,
+      next.image_line,
+      next.dm_on_join ? 1 : 0,
+      next.background_path || ""
+    );
+
+    return next;
+  } finally {
+    db.close();
+  }
+}
+
+export function welcomeBgDir(): string {
+  return path.join(path.dirname(resolveDbPath()), "welcome_bgs");
 }
 
 function mapProfile(row: Record<string, unknown>): UserProfileRow {

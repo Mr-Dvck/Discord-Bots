@@ -477,10 +477,14 @@ export const DASHBOARD_TOOLS = [
   ),
   tool(
     "generate_image",
-    "Generate an image (same as Discord /generate: LLM enhance + Pollinations flux). " +
-      "Optional: post to a Discord channel as the bot. size: square|welcome|banner|portrait|story.",
+    "Generate an image (LLM enhance + Pollinations flux). " +
+      "ONLY pass channel_id when the user gave a real Discord channel snowflake ID " +
+      "(from list_channels). NEVER pass null, \"null\", or invent an ID. " +
+      "If no channel, omit channel_id — generate only and tell them to open Image Studio or name a channel. " +
+      "size: square|welcome|banner|portrait|story. For join banners, generate BACKGROUND ART only (no names/text); " +
+      "Welcome module stamps member names on join.",
     {
-      prompt: { type: "string", description: "What to generate (welcome banner, etc.)" },
+      prompt: { type: "string", description: "What to generate (art only — no baked-in names)" },
       size: {
         type: "string",
         enum: ["square", "welcome", "banner", "portrait", "story"],
@@ -488,7 +492,8 @@ export const DASHBOARD_TOOLS = [
       enhance: { type: "boolean", description: "LLM enhance prompt (default true)" },
       channel_id: {
         type: "string",
-        description: "If set, post the image to this channel as Jamie",
+        description:
+          "Optional real channel snowflake from list_channels. Omit entirely if not posting.",
       },
       caption: { type: "string" },
     },
@@ -525,7 +530,24 @@ export const DASHBOARD_TOOLS = [
 ];
 
 function str(v: unknown, fallback = ""): string {
-  return typeof v === "string" ? v : fallback;
+  if (typeof v === "string") {
+    const s = v.trim();
+    // Models often pass the literal words "null" / "undefined"
+    if (!s || s === "null" || s === "undefined" || s === "None" || s === "none") {
+      return fallback;
+    }
+    return s;
+  }
+  if (typeof v === "number" && Number.isFinite(v)) return String(Math.trunc(v));
+  return fallback;
+}
+
+/** Discord snowflake only — rejects "null", empty, non-numeric junk. */
+function snowflake(v: unknown): string {
+  const s = str(v);
+  if (!s) return "";
+  if (!/^\d{5,22}$/.test(s)) return "";
+  return s;
 }
 
 function bool(v: unknown, fallback = false): boolean {
@@ -1156,61 +1178,52 @@ export async function executeTool(
         const enhance = args.enhance !== false;
         const img = await generateImage({ prompt, size, enhance });
 
-        const channelId = str(args.channel_id);
+        // Only post when we have a real Discord snowflake (never "null"/junk)
+        const channelId = snowflake(args.channel_id);
         let posted: { id?: string } | null = null;
-        if (channelId) {
+        let postError: string | null = null;
+
+        if (args.channel_id != null && args.channel_id !== "" && !channelId) {
+          postError =
+            "channel_id was missing or invalid (got null/non-snowflake). Image was still generated — name a real channel from list_channels to post.";
+        } else if (channelId) {
           const token = process.env.DISCORD_BOT_TOKEN_JAMIE;
           if (!token) {
-            return {
-              ok: true,
-              result: {
-                generated: true,
-                enhancedPrompt: img.enhancedPrompt,
-                size: `${img.width}x${img.height}`,
-                posted: false,
-                error: "No bot token to post",
-              },
-            };
-          }
-          const bytes = Buffer.from(img.base64, "base64");
-          const form = new FormData();
-          form.append(
-            "files[0]",
-            new Blob([new Uint8Array(bytes)], { type: "image/png" }),
-            "jamie_gen.png"
-          );
-          form.append(
-            "payload_json",
-            JSON.stringify({
-              content: `🎨 ${str(args.caption) || prompt}`.slice(0, 1900),
-            })
-          );
-          const res = await fetch(
-            `https://discord.com/api/v10/channels/${channelId}/messages`,
-            {
-              method: "POST",
-              headers: { Authorization: `Bot ${token}` },
-              body: form,
-              cache: "no-store",
-            }
-          );
-          if (res.ok) {
-            const msg = await res.json();
-            posted = { id: msg.id };
+            postError = "No bot token to post";
           } else {
-            const err = await res.text();
-            return {
-              ok: false,
-              error: `Generated but post failed: ${err.slice(0, 150)}`,
-              result: {
-                enhancedPrompt: img.enhancedPrompt,
-                size: `${img.width}x${img.height}`,
-              },
-            };
+            const bytes = Buffer.from(img.base64, "base64");
+            const form = new FormData();
+            form.append(
+              "files[0]",
+              new Blob([new Uint8Array(bytes)], { type: "image/png" }),
+              "jamie_gen.png"
+            );
+            form.append(
+              "payload_json",
+              JSON.stringify({
+                content: `🎨 ${str(args.caption) || prompt}`.slice(0, 1900),
+              })
+            );
+            const res = await fetch(
+              `https://discord.com/api/v10/channels/${channelId}/messages`,
+              {
+                method: "POST",
+                headers: { Authorization: `Bot ${token}` },
+                body: form,
+                cache: "no-store",
+              }
+            );
+            if (res.ok) {
+              const msg = await res.json();
+              posted = { id: msg.id };
+            } else {
+              const err = await res.text();
+              postError = `Discord post failed: ${err.slice(0, 180)}`;
+            }
           }
         }
 
-        // Don't return full base64 to the LLM context (too large)
+        // Generation succeeded even if post was skipped/failed — don't fail the whole tool
         return {
           ok: true,
           result: {
@@ -1218,11 +1231,16 @@ export async function executeTool(
             prompt,
             enhancedPrompt: img.enhancedPrompt,
             size: `${img.width}x${img.height}`,
+            // Intentionally no base64/dataUrl — keeps chat context small; use Image Studio to view/download
             posted: Boolean(posted),
             message_id: posted?.id ?? null,
-            note: channelId
+            channel_id: channelId || null,
+            post_error: postError,
+            note: posted
               ? "Image posted to Discord channel."
-              : "Image generated. User can also use Image Studio UI to download/post.",
+              : postError
+                ? `Image generated. Not posted: ${postError}`
+                : "Image generated (not posted). Open Image Studio to download, or name a #channel (I'll list_channels for the ID) to post it.",
           },
         };
       }

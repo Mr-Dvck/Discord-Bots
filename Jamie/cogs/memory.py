@@ -77,20 +77,7 @@ class MemoryCog(commands.Cog):
             joined_at=member.joined_at.isoformat() if member.joined_at else "",
             last_seen=datetime.now(timezone.utc).isoformat(),
         )
-
-        # Welcome message in dedicated channel
-        channel_id = await db.get_channel(member.guild.id)
-        if channel_id:
-            channel = member.guild.get_channel(channel_id)
-            if channel and channel.permissions_for(member.guild.me).send_messages:
-                embed = discord.Embed(
-                    description=f"👀 **{member.display_name}** just joined. I'm watching you.",
-                    color=0x39B7C4,
-                )
-                try:
-                    await channel.send(embed=embed)
-                except discord.Forbidden:
-                    pass
+        # Join banners are handled by WelcomeCog (Dyno-style), not here.
 
     # ── on_member_remove — note departure ─────────────────────────
 

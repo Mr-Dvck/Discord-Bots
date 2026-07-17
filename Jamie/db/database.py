@@ -84,6 +84,17 @@ class JamieDatabase(ModerationMixin):
             CREATE INDEX IF NOT EXISTS idx_msg_channel   ON message_memory(channel_id);
             CREATE INDEX IF NOT EXISTS idx_msg_time     ON message_memory(timestamp);
             CREATE INDEX IF NOT EXISTS idx_profile_guild ON user_profiles(guild_id);
+
+            CREATE TABLE IF NOT EXISTS welcome_config (
+                guild_id       INTEGER PRIMARY KEY,
+                enabled        INTEGER DEFAULT 0,
+                channel_id     INTEGER,
+                message        TEXT DEFAULT 'Welcome {user} — you are now Certified.',
+                image_line     TEXT DEFAULT 'is now Certified',
+                show_avatar    INTEGER DEFAULT 1,
+                dm_on_join     INTEGER DEFAULT 0,
+                background_path TEXT DEFAULT ''
+            );
         """)
         await self._conn.commit()
 
@@ -314,3 +325,56 @@ class JamieDatabase(ModerationMixin):
         for m in reversed(messages):
             lines.append(f"[{m['username']}]: {m['content'][:200]}")
         return "\n".join(lines)
+
+    # ── welcome (Dyno-style join banners) ─────────────────────────
+
+    _WELCOME_DEFAULTS = {
+        "enabled": 0,
+        "channel_id": None,
+        "message": "Welcome {user} — you are now Certified.",
+        "image_line": "is now Certified",
+        "show_avatar": 0,
+        "dm_on_join": 0,
+        "background_path": "",
+    }
+
+    async def get_welcome_config(self, guild_id: int) -> dict:
+        cur = await self._conn.execute(
+            "SELECT * FROM welcome_config WHERE guild_id = ?", (guild_id,)
+        )
+        row = await cur.fetchone()
+        if row:
+            return dict(row)
+        return {"guild_id": guild_id, **self._WELCOME_DEFAULTS}
+
+    async def upsert_welcome_config(self, guild_id: int, **kwargs):
+        current = await self.get_welcome_config(guild_id)
+        merged = {**self._WELCOME_DEFAULTS, **current, **kwargs, "guild_id": guild_id}
+        await self._conn.execute(
+            """
+            INSERT INTO welcome_config
+                (guild_id, enabled, channel_id, message, image_line,
+                 show_avatar, dm_on_join, background_path)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+            ON CONFLICT(guild_id) DO UPDATE SET
+                enabled         = excluded.enabled,
+                channel_id      = excluded.channel_id,
+                message         = excluded.message,
+                image_line      = excluded.image_line,
+                show_avatar     = excluded.show_avatar,
+                dm_on_join      = excluded.dm_on_join,
+                background_path = excluded.background_path
+            """,
+            (
+                guild_id,
+                int(merged.get("enabled") or 0),
+                merged.get("channel_id"),
+                merged.get("message") or self._WELCOME_DEFAULTS["message"],
+                merged.get("image_line") or self._WELCOME_DEFAULTS["image_line"],
+                int(merged.get("show_avatar", 1)),
+                int(merged.get("dm_on_join") or 0),
+                merged.get("background_path") or "",
+            ),
+        )
+        await self._conn.commit()
+        return await self.get_welcome_config(guild_id)

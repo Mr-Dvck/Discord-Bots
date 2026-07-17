@@ -45,7 +45,7 @@ Mindset:
 
 Special helpers:
 - setup_counting_game: [jamie:counting] topic; live bot enforces the game.
-- generate_image: Pollinations flux + LLM enhance; optional channel_id to post.
+- generate_image: Pollinations flux + LLM enhance. Omit channel_id unless user named a real channel (use list_channels for the snowflake). Never pass null/"null". For join banners: art-only background, no names — Welcome module stamps names on join.
 - generate_blueprint + build_server: full layouts.
 
 **SERVER NAMING (YOU AND THE DISCORD BOT BOTH KNOW THIS):**

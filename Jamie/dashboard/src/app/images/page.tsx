@@ -3,12 +3,11 @@
 import { useEffect, useState } from "react";
 import Sidebar from "@/components/Sidebar";
 import JamieChat from "@/components/JamieChat";
-import { applyWelcomeOverlay } from "@/lib/welcome-overlay";
 
 type ImageSize = "square" | "welcome" | "banner" | "portrait" | "story";
 
 const SIZES: { id: ImageSize; label: string; hint: string }[] = [
-  { id: "welcome", label: "Welcome", hint: "1280×720 — join banners" },
+  { id: "welcome", label: "Welcome bg", hint: "1280×720 — join banner art (no names)" },
   { id: "banner", label: "Banner", hint: "1500×500 — headers" },
   { id: "square", label: "Square", hint: "1024×1024 — icons / posts" },
   { id: "portrait", label: "Portrait", hint: "768×1024 — posters" },
@@ -20,25 +19,17 @@ const WELCOME_BG_PROMPT =
   "neon cyan and lime accents, gritty metal and night energy, cinematic wide composition, " +
   "empty lower third for text overlay, high detail, NO text, NO letters, NO watermarks";
 
-const PRESETS: { label: string; prompt: string; size: ImageSize; welcome?: boolean }[] = [
+const PRESETS: { label: string; prompt: string; size: ImageSize }[] = [
   {
-    label: "Certified welcome",
+    label: "Welcome background",
     size: "welcome",
-    welcome: true,
     prompt: WELCOME_BG_PROMPT,
-  },
-  {
-    label: "Welcome banner",
-    size: "welcome",
-    welcome: true,
-    prompt:
-      "Dark cyberpunk Discord welcome banner, neon cyan and lime, empty lower area for text, abstract metal geometry, high detail, no words no letters",
   },
   {
     label: "Certified vibe",
     size: "welcome",
     prompt:
-      "Gritty underground nightclub aesthetic, teal neon, cracked concrete, digital glitch, chaotic energy, cinematic lighting, no text",
+      "Gritty underground nightclub aesthetic, teal neon, cracked concrete, digital glitch, chaotic energy, cinematic lighting, no text no letters",
   },
   {
     label: "Jamie face card",
@@ -72,13 +63,14 @@ interface Channel {
   parent_id: string | null;
 }
 
+/**
+ * Image Studio = freeform AI art (rules, banners, memes, welcome *backgrounds*).
+ * Join names are NOT typed here — Welcome module stamps the joiner’s name on join.
+ */
 export default function ImagesPage() {
   const [prompt, setPrompt] = useState(PRESETS[0].prompt);
   const [size, setSize] = useState<ImageSize>("welcome");
   const [enhance, setEnhance] = useState(true);
-  const [welcomeMode, setWelcomeMode] = useState(true);
-  const [memberName, setMemberName] = useState("");
-  const [welcomeSuffix, setWelcomeSuffix] = useState("is now Certified");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [result, setResult] = useState<{
@@ -87,7 +79,6 @@ export default function ImagesPage() {
     prompt: string;
     width: number;
     height: number;
-    overlayLine?: string;
   } | null>(null);
 
   const [guilds, setGuilds] = useState<Guild[]>([]);
@@ -96,12 +87,17 @@ export default function ImagesPage() {
   const [channelId, setChannelId] = useState("");
   const [posting, setPosting] = useState(false);
   const [postMsg, setPostMsg] = useState("");
+  const [savingBg, setSavingBg] = useState(false);
+  const [bgMsg, setBgMsg] = useState("");
 
   useEffect(() => {
     fetch("/api/guilds")
       .then((r) => r.json())
       .then((data) => {
-        if (Array.isArray(data)) setGuilds(data);
+        if (Array.isArray(data)) {
+          setGuilds(data);
+          if (data.length === 1) setGuildId(data[0].id);
+        }
       })
       .catch(() => {});
   }, []);
@@ -116,61 +112,39 @@ export default function ImagesPage() {
       .then((r) => r.json())
       .then((data) => {
         const ch = Array.isArray(data.channels) ? data.channels : [];
-        setChannels(ch.filter((c: Channel) => c.type === 0));
+        setChannels(ch.filter((c: Channel) => c.type === 0 || c.type === 5));
       })
       .catch(() => setChannels([]));
   }, [guildId]);
 
   async function generate() {
     if (!prompt.trim() || loading) return;
-    if (welcomeMode && !memberName.trim()) {
-      setError('Enter a member name for the welcome line (e.g. "Duck").');
-      return;
-    }
     setLoading(true);
     setError("");
     setResult(null);
     setPostMsg("");
+    setBgMsg("");
     try {
-      // Background only — no baked-in letters (we stamp exact text after)
-      const genPrompt = welcomeMode
-        ? `${prompt.trim()}. Absolutely no text, no letters, no watermark, leave lower third clear for overlay.`
-        : prompt.trim();
+      // Leave lower third clear when generating join-banner art so the bot can stamp names later
+      const genPrompt =
+        size === "welcome"
+          ? `${prompt.trim()}. Absolutely no text, no letters, no watermark, leave lower third clear for automatic name overlay on join.`
+          : prompt.trim();
 
       const res = await fetch("/api/generate-image", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          prompt: genPrompt,
-          size: welcomeMode ? "welcome" : size,
-          enhance,
-        }),
+        body: JSON.stringify({ prompt: genPrompt, size, enhance }),
       });
       const data = await res.json();
       if (!res.ok || data.error) throw new Error(data.error || "Generation failed");
 
-      let dataUrl = data.dataUrl as string;
-      let overlayLine: string | undefined;
-      if (welcomeMode) {
-        const name = memberName.trim();
-        const suffix = welcomeSuffix.trim() || "is now Certified";
-        overlayLine = `${name} ${suffix}`;
-        dataUrl = await applyWelcomeOverlay({
-          dataUrl,
-          memberName: name,
-          suffix,
-          width: data.width,
-          height: data.height,
-        });
-      }
-
       setResult({
-        dataUrl,
+        dataUrl: data.dataUrl,
         enhancedPrompt: data.enhancedPrompt,
         prompt: data.prompt,
         width: data.width,
         height: data.height,
-        overlayLine,
       });
     } catch (e: unknown) {
       setError(e instanceof Error ? e.message : String(e));
@@ -184,16 +158,13 @@ export default function ImagesPage() {
     setPosting(true);
     setPostMsg("");
     try {
-      // Discord needs a hosted URL or multipart; we send via bot as file using a short-lived approach:
-      // upload is not available from pure JSON send_message. Use a temporary pollinations re-gen is bad.
-      // Instead: post message with the enhanced prompt + dashboard note, and attach via Discord attachment API.
       const res = await fetch("/api/post-image", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           channelId,
           dataUrl: result.dataUrl,
-          caption: result.overlayLine || result.prompt,
+          caption: result.prompt,
         }),
       });
       const data = await res.json();
@@ -203,6 +174,33 @@ export default function ImagesPage() {
       setPostMsg(e instanceof Error ? e.message : String(e));
     } finally {
       setPosting(false);
+    }
+  }
+
+  /** Save current art as the Welcome module background (joins stamp names automatically). */
+  async function useAsWelcomeBackground() {
+    if (!result || !guildId || savingBg) return;
+    setSavingBg(true);
+    setBgMsg("");
+    try {
+      // Persist via welcome background endpoint using the already-generated image
+      const res = await fetch("/api/welcome/background/from-data", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          guildId,
+          dataUrl: result.dataUrl,
+        }),
+      });
+      const data = await res.json();
+      if (!res.ok || data.error) throw new Error(data.error || "Save failed");
+      setBgMsg(
+        "Saved as Welcome module background. Joins will add each member’s name automatically."
+      );
+    } catch (e: unknown) {
+      setBgMsg(e instanceof Error ? e.message : String(e));
+    } finally {
+      setSavingBg(false);
     }
   }
 
@@ -220,11 +218,14 @@ export default function ImagesPage() {
       <main className="flex-1 ml-[240px] p-8" style={{ background: "var(--bg)" }}>
         <div className="mb-6">
           <h1 className="text-xl font-bold" style={{ color: "var(--text)" }}>
-            🎨 Image Studio
+            Image Studio
           </h1>
           <p className="text-sm" style={{ color: "var(--muted)" }}>
-            Pollinations flux + optional LLM enhance. Welcome mode stamps exact
-            text: <strong style={{ color: "var(--primary)" }}>[Name] is now Certified</strong>
+            Freeform AI art — rules cards, headers, memes, welcome{" "}
+            <em>backgrounds</em>. You never type a member name here. When someone
+            joins, the{" "}
+            <strong style={{ color: "var(--primary)" }}>Welcome module</strong>{" "}
+            stamps their name on the banner automatically.
           </p>
         </div>
 
@@ -232,7 +233,6 @@ export default function ImagesPage() {
           className="grid gap-6"
           style={{ gridTemplateColumns: "minmax(280px, 420px) 1fr" }}
         >
-          {/* Controls */}
           <div className="space-y-4">
             <div className="card">
               <label
@@ -246,7 +246,7 @@ export default function ImagesPage() {
                 value={prompt}
                 onChange={(e) => setPrompt(e.target.value)}
                 rows={6}
-                placeholder="Welcome banner for Certified, teal neon, dark void…"
+                placeholder="Dark teal void, empty lower third for text…"
                 style={{ resize: "vertical", minHeight: 120 }}
               />
 
@@ -260,54 +260,12 @@ export default function ImagesPage() {
                     onClick={() => {
                       setPrompt(p.prompt);
                       setSize(p.size);
-                      if (p.welcome) setWelcomeMode(true);
                     }}
                   >
                     {p.label}
                   </button>
                 ))}
               </div>
-            </div>
-
-            <div className="card-sm space-y-3">
-              <label
-                className="flex items-center gap-2 text-sm cursor-pointer"
-                style={{ color: "var(--text)" }}
-              >
-                <input
-                  type="checkbox"
-                  checked={welcomeMode}
-                  onChange={(e) => {
-                    setWelcomeMode(e.target.checked);
-                    if (e.target.checked) setSize("welcome");
-                  }}
-                />
-                Welcome banner text overlay
-              </label>
-              {welcomeMode && (
-                <div className="space-y-2">
-                  <input
-                    className="input"
-                    placeholder="Member name (e.g. Duck)"
-                    value={memberName}
-                    onChange={(e) => setMemberName(e.target.value)}
-                  />
-                  <input
-                    className="input"
-                    placeholder="is now Certified"
-                    value={welcomeSuffix}
-                    onChange={(e) => setWelcomeSuffix(e.target.value)}
-                  />
-                  <p className="text-xs" style={{ color: "var(--faint)" }}>
-                    Preview line:{" "}
-                    <span style={{ color: "var(--primary)" }}>
-                      {(memberName.trim() || "Member") +
-                        " " +
-                        (welcomeSuffix.trim() || "is now Certified")}
-                    </span>
-                  </p>
-                </div>
-              )}
             </div>
 
             <div className="card-sm space-y-3">
@@ -350,7 +308,7 @@ export default function ImagesPage() {
                   checked={enhance}
                   onChange={(e) => setEnhance(e.target.checked)}
                 />
-                Enhance prompt with LLM (same as Discord)
+                Enhance prompt with LLM
               </label>
             </div>
 
@@ -372,18 +330,20 @@ export default function ImagesPage() {
 
             {result && (
               <div className="card-sm space-y-3">
-                <div className="flex gap-2 flex-wrap">
-                  <button type="button" className="btn btn-accent" onClick={download}>
-                    Download PNG
-                  </button>
-                </div>
+                <button type="button" className="btn btn-accent" onClick={download}>
+                  Download PNG
+                </button>
 
                 <div
                   className="text-xs font-semibold uppercase"
                   style={{ color: "var(--faint)" }}
                 >
-                  Post to Discord
+                  Use as Welcome module background
                 </div>
+                <p className="text-xs" style={{ color: "var(--muted)" }}>
+                  Saves this art for auto-joins. Names are added by the bot when
+                  people join — not here.
+                </p>
                 <select
                   className="select"
                   value={guildId}
@@ -396,6 +356,33 @@ export default function ImagesPage() {
                     </option>
                   ))}
                 </select>
+                <button
+                  type="button"
+                  className="btn btn-primary"
+                  disabled={!guildId || savingBg}
+                  onClick={useAsWelcomeBackground}
+                >
+                  {savingBg ? "Saving…" : "Save as welcome background"}
+                </button>
+                {bgMsg && (
+                  <p
+                    className="text-xs"
+                    style={{
+                      color: bgMsg.includes("Saved")
+                        ? "var(--accent)"
+                        : "var(--danger)",
+                    }}
+                  >
+                    {bgMsg}
+                  </p>
+                )}
+
+                <div
+                  className="text-xs font-semibold uppercase pt-2"
+                  style={{ color: "var(--faint)" }}
+                >
+                  Or post once to Discord
+                </div>
                 <select
                   className="select"
                   value={channelId}
@@ -411,7 +398,7 @@ export default function ImagesPage() {
                 </select>
                 <button
                   type="button"
-                  className="btn btn-primary"
+                  className="btn btn-ghost"
                   disabled={!channelId || posting}
                   onClick={postToDiscord}
                 >
@@ -433,7 +420,6 @@ export default function ImagesPage() {
             )}
           </div>
 
-          {/* Preview */}
           <div className="card min-h-[360px] flex flex-col">
             <div
               className="text-xs font-semibold uppercase tracking-wider mb-3"
@@ -443,7 +429,7 @@ export default function ImagesPage() {
             </div>
             {!result && !loading && (
               <div
-                className="flex-1 flex items-center justify-center rounded-lg text-sm"
+                className="flex-1 flex items-center justify-center rounded-lg text-sm text-center px-6"
                 style={{
                   background: "var(--surface)",
                   border: "1px dashed var(--line)",
@@ -451,7 +437,7 @@ export default function ImagesPage() {
                   minHeight: 320,
                 }}
               >
-                Your image shows up here
+                Art only — no names. Joins get names from the Welcome module.
               </div>
             )}
             {loading && (
@@ -492,12 +478,6 @@ export default function ImagesPage() {
                       {result.enhancedPrompt}
                     </div>
                   )}
-                  {result.overlayLine && (
-                    <div>
-                      <strong style={{ color: "var(--accent)" }}>Overlay:</strong>{" "}
-                      {result.overlayLine}
-                    </div>
-                  )}
                   <div style={{ color: "var(--faint)" }}>
                     {result.width}×{result.height}
                   </div>
@@ -507,7 +487,7 @@ export default function ImagesPage() {
           </div>
         </div>
       </main>
-      <JamieChat guildContext="User is in Image Studio generating welcome/banner art for Discord." />
+      <JamieChat guildContext="User is in Image Studio making freeform art / welcome backgrounds. Join names are automatic via Welcome module, not typed here." />
     </div>
   );
 }

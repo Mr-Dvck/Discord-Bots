@@ -48,6 +48,7 @@ export const SLASH_COMMANDS: SlashCommand[] = [
   cmd("rant", "Long rant about a topic (+ praise or − roast), up to 4000 chars", "Core", "Chat"),
   cmd("generate", "Generate an image", "Core", "Images"),
   cmd("imagine", "Jamie imagines something wild", "Core", "Images"),
+  // Welcome is a Module (dashboard), not slash commands — auto on join.
   cmd("profile", "View Jamie's profile on a user", "Core", "Memory"),
   cmd("servermap", "View the server map", "Core", "Memory"),
   cmd("remember", "Search Jamie's message memory", "Core", "Memory"),

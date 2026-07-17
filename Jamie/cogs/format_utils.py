@@ -7,6 +7,11 @@ import discord
 JAMIE_COLOR = 0x39B7C4
 
 
+# Not a cog — kept under cogs/ for imports; setup is a no-op so main.py load_extension is happy.
+async def setup(bot):
+    return
+
+
 def to_bold_unicode(text: str) -> str:
     """
     Convert A-Z / a-z / 0-9 to Mathematical Sans-Serif Bold (modern bold unicode).

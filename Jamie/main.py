@@ -113,12 +113,29 @@ class JamieBot(commands.Bot):
             except Exception:
                 log.exception("Failed to send error response")
 
-        # Sync slash commands
+        # Global slash commands only (one set — no guild copies = no duplicates).
+        # Propagation can take a few minutes after first publish.
         try:
             synced = await self.tree.sync()
-            log.info("Synced %d slash commands", len(synced))
+            names = sorted(c.name for c in synced)
+            log.info("Synced %d global slash commands: %s", len(synced), ", ".join(names))
         except Exception as e:
-            log.error("Failed to sync commands: %s", e)
+            log.error("Failed to sync global commands: %s", e)
+
+        self._cleared_guild_command_dups = False
+
+    async def _clear_guild_command_duplicates(self):
+        """
+        Remove per-guild command copies left over from copy_global_to.
+        Those stack on top of global commands and show as duplicates in Discord.
+        """
+        for guild in self.guilds:
+            try:
+                self.tree.clear_commands(guild=guild)
+                await self.tree.sync(guild=guild)
+                log.info("Cleared guild command copies for %s (%s)", guild.name, guild.id)
+            except Exception as e:
+                log.error("Failed clearing guild commands for %s: %s", guild.id, e)
 
     async def on_ready(self):
         """Bot is connected and ready."""
@@ -127,6 +144,10 @@ class JamieBot(commands.Bot):
         log.info("  Guilds: %d", len(self.guilds))
         log.info("  Users:  %d", sum(g.member_count or 0 for g in self.guilds))
         log.info("════════════════════════════════════════")
+
+        if not getattr(self, "_cleared_guild_command_dups", False):
+            self._cleared_guild_command_dups = True
+            await self._clear_guild_command_duplicates()
 
         # Set presence
         await self.change_presence(

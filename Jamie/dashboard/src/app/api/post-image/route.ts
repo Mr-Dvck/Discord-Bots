@@ -17,7 +17,14 @@ export async function POST(req: Request) {
     }
 
     const body = await req.json();
-    const channelId = String(body.channelId || "");
+    const rawChannel = String(body.channelId ?? body.channel_id ?? "").trim();
+    const channelId =
+      rawChannel &&
+      rawChannel !== "null" &&
+      rawChannel !== "undefined" &&
+      /^\d{5,22}$/.test(rawChannel)
+        ? rawChannel
+        : "";
     const dataUrl = String(body.dataUrl || "");
     const caption = String(body.caption || "Generated with Jamie Image Studio").slice(
       0,
@@ -26,7 +33,10 @@ export async function POST(req: Request) {
 
     if (!channelId || !dataUrl.startsWith("data:image/")) {
       return NextResponse.json(
-        { error: "channelId and image dataUrl required" },
+        {
+          error:
+            "Valid channelId (Discord snowflake) and image dataUrl required. Got invalid/null channel.",
+        },
         { status: 400 }
       );
     }

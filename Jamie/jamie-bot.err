@@ -1,0 +1,158 @@
+03:03:17 [discord.client] WARNING: PyNaCl is not installed, voice will NOT be supported
+03:03:17 [discord.client] WARNING: davey is not installed, voice will NOT be supported
+03:03:17 [discord.client] INFO: logging in using static token
+03:03:17 [jamie] INFO: Database connected
+03:03:17 [jamie] INFO: LLM client started (model: meta-llama/llama-3.3-70b-instruct)
+03:03:17 [jamie] INFO: Image generator started
+03:03:17 [jamie] INFO: Loaded cog: cogs.chat
+03:03:17 [jamie] INFO: Loaded cog: cogs.counting
+03:03:17 [jamie] INFO: Loaded cog: cogs.economy
+03:03:17 [jamie] INFO: Loaded cog: cogs.events_extra
+03:03:17 [jamie] ERROR: Failed to load cog cogs.format_utils: Extension 'cogs.format_utils' has no 'setup' function.
+03:03:17 [jamie] INFO: Loaded cog: cogs.image_cog
+03:03:17 [jamie] INFO: Loaded cog: cogs.info_cmds
+03:03:17 [jamie] INFO: Loaded cog: cogs.manage_cmds
+03:03:17 [jamie] INFO: Loaded cog: cogs.memory
+03:03:17 [jamie] INFO: Loaded cog: cogs.misc_cmds
+03:03:17 [jamie] INFO: Loaded cog: cogs.modlog_cmds
+03:03:17 [jamie] INFO: Loaded cog: cogs.mod_cmds
+03:03:17 [jamie] INFO: Loaded cog: cogs.roles_cmds
+03:03:17 [jamie] INFO: Loaded cog: cogs.setup
+03:03:17 [jamie] INFO: Loaded cog: cogs.utility
+03:03:17 [jamie] INFO: Loaded cog: cogs.welcome
+03:03:18 [jamie] INFO: Synced 21 slash commands
+03:03:19 [discord.gateway] INFO: Shard ID None has connected to Gateway (Session ID: 2618df4d983ff488127633a1a4f59168).
+03:03:21 [jamie] INFO: ════════════════════════════════════════
+03:03:21 [jamie] INFO:   JAMIE IS ONLINE
+03:03:21 [jamie] INFO:   Guilds: 1
+03:03:21 [jamie] INFO:   Users:  336
+03:03:21 [jamie] INFO: ════════════════════════════════════════
+03:03:21 [jamie.memory] INFO: Running personality analysis cycle
+03:03:21 [jamie.memory] INFO: Running memory prune cycle
+�══════
+03:03:21 [jamie.memory] INFO: Running personality analysis cycle
+03:03:21 [jamie.memory] INFO: Running memory prune cycle
+03:03:45 [discord.client] WARNING: PyNaCl is not installed, voice will NOT be supported
+03:03:45 [discord.client] WARNING: davey is not installed, voice will NOT be supported
+03:03:45 [discord.client] INFO: logging in using static token
+03:03:46 [jamie] INFO: Database connected
+03:03:46 [jamie] INFO: LLM client started (model: meta-llama/llama-3.3-70b-instruct)
+03:03:46 [jamie] INFO: Image generator started
+03:03:46 [jamie] INFO: Loaded cog: cogs.chat
+03:03:46 [jamie] INFO: Loaded cog: cogs.counting
+03:03:46 [jamie] INFO: Loaded cog: cogs.economy
+03:03:46 [jamie] INFO: Loaded cog: cogs.events_extra
+03:03:46 [jamie] INFO: Loaded cog: cogs.format_utils
+03:03:46 [jamie] INFO: Loaded cog: cogs.image_cog
+03:03:46 [jamie] INFO: Loaded cog: cogs.info_cmds
+03:03:46 [jamie] INFO: Loaded cog: cogs.manage_cmds
+03:03:46 [jamie] INFO: Loaded cog: cogs.memory
+03:03:46 [jamie] INFO: Loaded cog: cogs.misc_cmds
+03:03:46 [jamie] INFO: Loaded cog: cogs.modlog_cmds
+03:03:46 [jamie] INFO: Loaded cog: cogs.mod_cmds
+03:03:46 [jamie] INFO: Loaded cog: cogs.roles_cmds
+03:03:46 [jamie] INFO: Loaded cog: cogs.setup
+03:03:46 [jamie] INFO: Loaded cog: cogs.utility
+03:03:46 [jamie] INFO: Loaded cog: cogs.welcome
+03:04:18 [jamie] INFO: Synced 21 slash commands
+03:04:19 [discord.gateway] INFO: Shard ID None has connected to Gateway (Session ID: 64ef35b2448de3f77d2426661cc27c00).
+03:04:21 [jamie] INFO: ════════════════════════════════════════
+03:04:21 [jamie] INFO:   JAMIE IS ONLINE
+03:04:21 [jamie] INFO:   Guilds: 1
+03:04:21 [jamie] INFO:   Users:  336
+03:04:21 [jamie] INFO: ════════════════════════════════════════
+03:04:21 [jamie.memory] INFO: Running personality analysis cycle
+03:04:21 [jamie.memory] INFO: Running memory prune cycle
+03:07:02 [discord.client] WARNING: PyNaCl is not installed, voice will NOT be supported
+03:07:02 [discord.client] WARNING: davey is not installed, voice will NOT be supported
+03:07:02 [discord.client] INFO: logging in using static token
+03:07:02 [jamie] INFO: Database connected
+03:07:02 [jamie] INFO: LLM client started (model: meta-llama/llama-3.3-70b-instruct)
+03:07:02 [jamie] INFO: Image generator started
+03:07:02 [jamie] INFO: Loaded cog: cogs.chat
+03:07:02 [jamie] INFO: Loaded cog: cogs.counting
+03:07:02 [jamie] INFO: Loaded cog: cogs.economy
+03:07:02 [jamie] INFO: Loaded cog: cogs.events_extra
+03:07:02 [jamie] INFO: Loaded cog: cogs.format_utils
+03:07:02 [jamie] INFO: Loaded cog: cogs.image_cog
+03:07:02 [jamie] INFO: Loaded cog: cogs.info_cmds
+03:07:02 [jamie] INFO: Loaded cog: cogs.manage_cmds
+03:07:02 [jamie] INFO: Loaded cog: cogs.memory
+03:07:02 [jamie] INFO: Loaded cog: cogs.misc_cmds
+03:07:02 [jamie] INFO: Loaded cog: cogs.modlog_cmds
+03:07:02 [jamie] INFO: Loaded cog: cogs.mod_cmds
+03:07:02 [jamie] INFO: Loaded cog: cogs.roles_cmds
+03:07:02 [jamie] INFO: Loaded cog: cogs.setup
+03:07:02 [jamie] INFO: Loaded cog: cogs.utility
+03:07:02 [jamie] INFO: Loaded cog: cogs.welcome
+03:07:08 [discord.client] WARNING: PyNaCl is not installed, voice will NOT be supported
+03:07:08 [discord.client] WARNING: davey is not installed, voice will NOT be supported
+03:07:08 [discord.client] INFO: logging in using static token
+03:07:09 [jamie] INFO: Database connected
+03:07:09 [jamie] INFO: LLM client started (model: meta-llama/llama-3.3-70b-instruct)
+03:07:09 [jamie] INFO: Image generator started
+03:07:09 [jamie] INFO: Loaded cog: cogs.chat
+03:07:09 [jamie] INFO: Loaded cog: cogs.counting
+03:07:09 [jamie] INFO: Loaded cog: cogs.economy
+03:07:09 [jamie] INFO: Loaded cog: cogs.events_extra
+03:07:09 [jamie] INFO: Loaded cog: cogs.format_utils
+03:07:09 [jamie] INFO: Loaded cog: cogs.image_cog
+03:07:09 [jamie] INFO: Loaded cog: cogs.info_cmds
+03:07:09 [jamie] INFO: Loaded cog: cogs.manage_cmds
+03:07:09 [jamie] INFO: Loaded cog: cogs.memory
+03:07:09 [jamie] INFO: Loaded cog: cogs.misc_cmds
+03:07:09 [jamie] INFO: Loaded cog: cogs.modlog_cmds
+03:07:09 [jamie] INFO: Loaded cog: cogs.mod_cmds
+03:07:09 [jamie] INFO: Loaded cog: cogs.roles_cmds
+03:07:09 [jamie] INFO: Loaded cog: cogs.setup
+03:07:09 [jamie] INFO: Loaded cog: cogs.utility
+03:07:09 [jamie] INFO: Loaded cog: cogs.welcome
+03:07:09 [jamie] INFO: Synced 21 global slash commands: ask, bot, economy, generate, help, imagine, manage, misc, mod, modlog, note, profile, ranks, rant, remember, servermap, setchannel, setup, stats, talk, welcome
+03:07:11 [discord.gateway] INFO: Shard ID None has connected to Gateway (Session ID: c6fc2ceee9cd46bf76f9527c428681c4).
+03:07:13 [jamie] INFO: ════════════════════════════════════════
+03:07:13 [jamie] INFO:   JAMIE IS ONLINE
+03:07:13 [jamie] INFO:   Guilds: 1
+03:07:13 [jamie] INFO:   Users:  336
+03:07:13 [jamie] INFO: ════════════════════════════════════════
+03:07:13 [jamie.memory] INFO: Running personality analysis cycle
+03:07:13 [jamie.memory] INFO: Running memory prune cycle
+03:07:13 [jamie] INFO: Guild-synced 21 commands to Certified (1139997451835674667): ask, bot, economy, generate, help, imagine, manage, misc, mod, modlog, note, profile, ranks, rant, remember, servermap, setchannel, setup, stats, talk, welcome
+03:28:07 [discord.gateway] INFO: Shard ID None has successfully RESUMED session c6fc2ceee9cd46bf76f9527c428681c4.
+03:29:21 [discord.client] WARNING: PyNaCl is not installed, voice will NOT be supported
+03:29:21 [discord.client] WARNING: davey is not installed, voice will NOT be supported
+03:29:21 [discord.client] INFO: logging in using static token
+03:29:22 [jamie] INFO: Database connected
+03:29:22 [jamie] INFO: LLM client started (model: meta-llama/llama-3.3-70b-instruct)
+03:29:22 [jamie] INFO: Image generator started
+03:29:22 [jamie] INFO: Loaded cog: cogs.chat
+03:29:22 [jamie] INFO: Loaded cog: cogs.counting
+03:29:22 [jamie] INFO: Loaded cog: cogs.economy
+03:29:22 [jamie] INFO: Loaded cog: cogs.events_extra
+03:29:22 [jamie] INFO: Loaded cog: cogs.format_utils
+03:29:22 [jamie] INFO: Loaded cog: cogs.image_cog
+03:29:22 [jamie] INFO: Loaded cog: cogs.info_cmds
+03:29:22 [jamie] INFO: Loaded cog: cogs.manage_cmds
+03:29:22 [jamie] INFO: Loaded cog: cogs.memory
+03:29:22 [jamie] INFO: Loaded cog: cogs.misc_cmds
+03:29:22 [jamie] INFO: Loaded cog: cogs.modlog_cmds
+03:29:22 [jamie] INFO: Loaded cog: cogs.mod_cmds
+03:29:22 [jamie] INFO: Loaded cog: cogs.roles_cmds
+03:29:22 [jamie] INFO: Loaded cog: cogs.setup
+03:29:22 [jamie] INFO: Loaded cog: cogs.utility
+03:29:22 [jamie] INFO: Loaded cog: cogs.welcome
+03:29:22 [jamie] INFO: Synced 20 global slash commands: ask, bot, economy, generate, help, imagine, manage, misc, mod, modlog, note, profile, ranks, rant, remember, servermap, setchannel, setup, stats, talk
+03:29:23 [discord.gateway] INFO: Shard ID None has connected to Gateway (Session ID: 06a909897e57264ef61f6d0dfa02ae8d).
+03:29:25 [jamie] INFO: ════════════════════════════════════════
+03:29:25 [jamie] INFO:   JAMIE IS ONLINE
+03:29:25 [jamie] INFO:   Guilds: 1
+03:29:25 [jamie] INFO:   Users:  336
+03:29:25 [jamie] INFO: ════════════════════════════════════════
+03:29:25 [jamie.memory] INFO: Running personality analysis cycle
+03:29:25 [jamie.memory] INFO: Running memory prune cycle
+03:29:25 [jamie] INFO: Cleared guild command copies for Certified (1139997451835674667)
+03:59:25 [jamie.memory] INFO: Running personality analysis cycle
+04:29:25 [jamie.memory] INFO: Running personality analysis cycle
+04:29:25 [jamie.memory] INFO: Running memory prune cycle
+04:59:25 [jamie.memory] INFO: Running personality analysis cycle
+05:29:25 [jamie.memory] INFO: Running personality analysis cycle
+05:29:25 [jamie.memory] INFO: Running memory prune cycle
