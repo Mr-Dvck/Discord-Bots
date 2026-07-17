@@ -91,11 +91,23 @@ class JamieBot(commands.Bot):
             except Exception as e:
                 log.error("Failed to load cog %s: %s", ext, e)
 
-        @self.tree.interaction_check
         async def global_interaction_check(interaction: discord.Interaction) -> bool:
             if not await self.is_owner(interaction.user):
                 raise discord.app_commands.CheckFailure("Only the bot owner is authorized to use Jamie.")
+            
+            if interaction.guild:
+                full_name = interaction.command.qualified_name.lower()
+                top_name = full_name.split()[0]
+                sub_name = full_name.split()[-1]
+                
+                settings = await self.db.get_guild_settings(interaction.guild.id)
+                cmds = settings.get("commands") or {}
+                
+                if cmds.get(full_name) is False or cmds.get(sub_name) is False or cmds.get(top_name) is False:
+                    raise discord.app_commands.CheckFailure(f"Command `/{full_name}` is disabled in this server.")
             return True
+
+        self.tree.interaction_check = global_interaction_check
 
         # Always reply on slash errors so Discord never shows "application did not respond"
         @self.tree.error

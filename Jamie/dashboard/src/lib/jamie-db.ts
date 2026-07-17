@@ -462,3 +462,72 @@ export function listGuildIdsFromProfiles(): string[] {
     db.close();
   }
 }
+
+export function getGuildCommandsConfig(guildId: string): Record<string, boolean> {
+  const { db } = openDb();
+  try {
+    db.exec(`
+      CREATE TABLE IF NOT EXISTS guild_settings (
+        guild_id    INTEGER PRIMARY KEY,
+        prefix      TEXT DEFAULT '?',
+        modules_json TEXT DEFAULT '{}',
+        commands_json TEXT DEFAULT '{}',
+        custom_cmds_json TEXT DEFAULT '[]',
+        muted_role_id INTEGER,
+        log_channel_id INTEGER
+      );
+    `);
+    const row = db
+      .prepare("SELECT commands_json FROM guild_settings WHERE CAST(guild_id AS TEXT) = ?")
+      .get(String(guildId)) as { commands_json: string } | undefined;
+    if (row && row.commands_json) {
+      try {
+        return JSON.parse(row.commands_json);
+      } catch {
+        return {};
+      }
+    }
+    return {};
+  } finally {
+    db.close();
+  }
+}
+
+export function setGuildCommandsConfig(guildId: string, config: Record<string, boolean>): Record<string, boolean> {
+  const { db } = openDb();
+  try {
+    db.exec(`
+      CREATE TABLE IF NOT EXISTS guild_settings (
+        guild_id    INTEGER PRIMARY KEY,
+        prefix      TEXT DEFAULT '?',
+        modules_json TEXT DEFAULT '{}',
+        commands_json TEXT DEFAULT '{}',
+        custom_cmds_json TEXT DEFAULT '[]',
+        muted_role_id INTEGER,
+        log_channel_id INTEGER
+      );
+    `);
+    const row = db
+      .prepare("SELECT commands_json FROM guild_settings WHERE CAST(guild_id AS TEXT) = ?")
+      .get(String(guildId)) as { commands_json: string } | undefined;
+    
+    let existing = {};
+    if (row && row.commands_json) {
+      try {
+        existing = JSON.parse(row.commands_json);
+      } catch {}
+    }
+    const merged = { ...existing, ...config };
+    const serialized = JSON.stringify(merged);
+
+    db.prepare(`
+      INSERT INTO guild_settings (guild_id, commands_json)
+      VALUES (?, ?)
+      ON CONFLICT(guild_id) DO UPDATE SET commands_json = excluded.commands_json
+    `).run(String(guildId), serialized);
+
+    return merged;
+  } finally {
+    db.close();
+  }
+}

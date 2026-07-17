@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useMemo, useState, useEffect, useCallback } from "react";
 import Sidebar from "@/components/Sidebar";
 import JamieChat from "@/components/JamieChat";
 import {
@@ -8,6 +8,11 @@ import {
   SLASH_COMMANDS,
   commandsByPack,
 } from "@/lib/commands";
+
+interface Guild {
+  id: string;
+  name: string;
+}
 
 const PACK_META: Record<
   string,
@@ -56,9 +61,49 @@ const PACK_META: Record<
 };
 
 export default function CommandsPage() {
+  const [guilds, setGuilds] = useState<Guild[]>([]);
+  const [selectedGuild, setSelectedGuild] = useState("");
   const [search, setSearch] = useState("");
   const [pack, setPack] = useState<string>("All");
+  const [cmdConfig, setCmdConfig] = useState<Record<string, boolean>>({});
+  const [saving, setSaving] = useState(false);
+  const [statusMsg, setStatusMsg] = useState("");
+
   const byPack = useMemo(() => commandsByPack(), []);
+
+  // Fetch servers list on mount
+  useEffect(() => {
+    fetch("/api/guilds")
+      .then((r) => r.json())
+      .then((data) => {
+        if (Array.isArray(data)) {
+          setGuilds(data);
+          if (data.length === 1) setSelectedGuild(data[0].id);
+        }
+      })
+      .catch(() => {});
+  }, []);
+
+  // Load command configurations for selected server
+  const loadCommands = useCallback(async (guildId: string) => {
+    if (!guildId) return;
+    setStatusMsg("");
+    try {
+      const res = await fetch(`/api/commands?guildId=${encodeURIComponent(guildId)}`);
+      const data = await res.json();
+      if (data.config) {
+        setCmdConfig(data.config);
+      } else {
+        setCmdConfig({});
+      }
+    } catch (e: unknown) {
+      setStatusMsg(e instanceof Error ? e.message : String(e));
+    }
+  }, []);
+
+  useEffect(() => {
+    if (selectedGuild) loadCommands(selectedGuild);
+  }, [selectedGuild, loadCommands]);
 
   const filtered = useMemo(() => {
     const q = search.trim().toLowerCase();
@@ -83,20 +128,130 @@ export default function CommandsPage() {
     return map;
   }, [filtered]);
 
+  // Toggle command local checkbox state
+  function toggleCommand(name: string) {
+    const key = name.toLowerCase();
+    setCmdConfig((prev) => ({
+      ...prev,
+      [key]: prev[key] === false ? true : false,
+    }));
+  }
+
+  // Save commands configuration to the database
+  async function saveCommands() {
+    if (!selectedGuild) {
+      setStatusMsg("Select a server first.");
+      return;
+    }
+    setSaving(true);
+    setStatusMsg("");
+    try {
+      const res = await fetch("/api/commands", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          guildId: selectedGuild,
+          config: cmdConfig,
+        }),
+      });
+      const data = await res.json();
+      if (!res.ok || data.error) throw new Error(data.error || "Save failed");
+      setStatusMsg("Command preferences saved successfully.");
+    } catch (e: unknown) {
+      setStatusMsg(e instanceof Error ? e.message : String(e));
+    } finally {
+      setSaving(false);
+    }
+  }
+
   return (
     <div className="flex min-h-screen">
       <Sidebar />
       <main className="flex-1 ml-[240px] p-8" style={{ background: "var(--bg)" }}>
-        <div className="flex flex-wrap items-end justify-between gap-4 mb-6">
+        {/* Top Header & Server Selector */}
+        <div className="flex flex-wrap items-center justify-between gap-6 mb-8 pb-6" style={{ borderBottom: "1px solid var(--line)" }}>
           <div>
             <h1 className="text-xl font-bold" style={{ color: "var(--text)" }}>
-              ⌨️ Commands
+              ⌨️ Commands Manager
             </h1>
             <p className="text-sm" style={{ color: "var(--muted)" }}>
-              {SLASH_COMMANDS.length} slash commands across {COMMAND_PACKS.length}{" "}
-              packs — use these in Discord
+              Enable or disable commands to clean up what is authorized on your server.
             </p>
           </div>
+
+          <div className="flex items-center gap-3">
+            <select
+              className="select"
+              value={selectedGuild}
+              onChange={(e) => setSelectedGuild(e.target.value)}
+              style={{ minWidth: 200 }}
+            >
+              <option value="">Select Server…</option>
+              {guilds.map((g) => (
+                <option key={g.id} value={g.id}>
+                  {g.name}
+                </option>
+              ))}
+            </select>
+
+            <button
+              onClick={saveCommands}
+              className="btn btn-accent"
+              disabled={saving || !selectedGuild}
+              style={{ padding: "8px 16px" }}
+            >
+              {saving ? "Saving…" : "Save Changes"}
+            </button>
+          </div>
+        </div>
+
+        {/* Alerts / Success Message */}
+        {statusMsg && (
+          <div
+            className="p-3 mb-6 rounded-lg text-sm flex items-center justify-between animate-fade"
+            style={{
+              background: statusMsg.includes("success") || statusMsg.includes("successfully")
+                ? "rgba(125,211,167,0.15)"
+                : "rgba(240,71,71,0.15)",
+              color: statusMsg.includes("success") || statusMsg.includes("successfully")
+                ? "var(--ok)"
+                : "var(--danger)",
+              border: `1px solid ${
+                statusMsg.includes("success") || statusMsg.includes("successfully")
+                  ? "rgba(125,211,167,0.3)"
+                  : "rgba(240,71,71,0.3)"
+              }`,
+            }}
+          >
+            <span>{statusMsg}</span>
+            <button onClick={() => setStatusMsg("")} className="text-xs hover:underline">
+              Dismiss
+            </button>
+          </div>
+        )}
+
+        {/* Search & Packs Filters */}
+        <div className="flex flex-wrap items-center justify-between gap-4 mb-6">
+          <div className="flex gap-2 flex-wrap">
+            {["All", ...COMMAND_PACKS].map((p) => (
+              <button
+                key={p}
+                type="button"
+                onClick={() => setPack(p)}
+                className="btn"
+                style={{
+                  background: pack === p ? "var(--primary-dim)" : "transparent",
+                  color: pack === p ? "var(--primary)" : "var(--muted)",
+                  border: pack === p ? "1px solid rgba(57,183,196,0.3)" : "1px solid var(--line)",
+                  fontSize: "0.8rem",
+                  padding: "6px 12px",
+                }}
+              >
+                {p}
+              </button>
+            ))}
+          </div>
+
           <input
             type="text"
             value={search}
@@ -107,66 +262,7 @@ export default function CommandsPage() {
           />
         </div>
 
-        {/* Pack overview */}
-        <div
-          className="grid gap-3 mb-6"
-          style={{ gridTemplateColumns: "repeat(auto-fill, minmax(200px, 1fr))" }}
-        >
-          {COMMAND_PACKS.map((p) => {
-            const meta = PACK_META[p];
-            const count = byPack[p]?.length ?? 0;
-            const active = pack === p;
-            return (
-              <button
-                key={p}
-                type="button"
-                onClick={() => setPack(active ? "All" : p)}
-                className="card-sm text-left transition-all hover:scale-[1.02]"
-                style={{
-                  borderColor: active ? meta?.color : "var(--line)",
-                  boxShadow: active ? `0 0 0 1px ${meta?.color}` : undefined,
-                }}
-              >
-                <div className="flex items-center gap-2 mb-1">
-                  <span className="text-lg">{meta?.icon}</span>
-                  <span className="font-bold text-sm" style={{ color: meta?.color }}>
-                    {p}
-                  </span>
-                  <span className="ml-auto badge badge-core">{count}</span>
-                </div>
-                <div className="text-xs" style={{ color: "var(--faint)" }}>
-                  {meta?.blurb}
-                </div>
-              </button>
-            );
-          })}
-        </div>
-
-        {/* Filters */}
-        <div className="flex gap-2 mb-6 flex-wrap">
-          {["All", ...COMMAND_PACKS].map((p) => (
-            <button
-              key={p}
-              type="button"
-              onClick={() => setPack(p)}
-              className="btn"
-              style={{
-                background:
-                  pack === p ? "var(--primary-dim)" : "transparent",
-                color: pack === p ? "var(--primary)" : "var(--muted)",
-                border:
-                  pack === p
-                    ? "1px solid rgba(57,183,196,0.3)"
-                    : "1px solid var(--line)",
-                fontSize: "0.8rem",
-                padding: "6px 12px",
-              }}
-            >
-              {p}
-            </button>
-          ))}
-        </div>
-
+        {/* Command list */}
         {filtered.length === 0 ? (
           <div className="card">
             <p style={{ color: "var(--faint)" }}>No commands match your search.</p>
@@ -187,36 +283,52 @@ export default function CommandsPage() {
                     </h2>
                     <span className="badge badge-core">{cmds.length}</span>
                   </div>
-                  <div className="space-y-2">
-                    {cmds.map((c) => (
-                      <div
-                        key={c.full}
-                        className="flex flex-wrap items-start gap-3 px-3 py-2.5 rounded-lg"
-                        style={{
-                          background: "var(--surface)",
-                          border: "1px solid var(--line)",
-                        }}
-                      >
-                        <code
-                          className="text-sm font-semibold shrink-0"
+
+                  <div className="grid gap-2">
+                    {cmds.map((c) => {
+                      const cmdKey = c.name.toLowerCase();
+                      const isChecked = cmdConfig[cmdKey] !== false; // default enabled
+                      return (
+                        <label
+                          key={c.full}
+                          className="flex items-center gap-4 px-4 py-3 rounded-lg cursor-pointer transition-all hover:bg-[var(--line)]"
                           style={{
-                            color: "var(--primary)",
-                            background: "var(--primary-dim)",
-                            padding: "2px 8px",
-                            borderRadius: 6,
+                            background: "var(--surface)",
+                            border: "1px solid var(--line)",
+                            opacity: isChecked ? 1 : 0.6,
                           }}
                         >
-                          {c.full}
-                        </code>
-                        <span
-                          className="text-sm flex-1 min-w-[180px]"
-                          style={{ color: "var(--muted)" }}
-                        >
-                          {c.description}
-                        </span>
-                        <span className="badge badge-standard">{c.category}</span>
-                      </div>
-                    ))}
+                          <input
+                            type="checkbox"
+                            checked={isChecked}
+                            onChange={() => toggleCommand(c.name)}
+                            className="checkbox"
+                            disabled={!selectedGuild}
+                          />
+
+                          <code
+                            className="text-sm font-semibold shrink-0"
+                            style={{
+                              color: isChecked ? "var(--primary)" : "var(--muted)",
+                              background: isChecked ? "var(--primary-dim)" : "var(--line)",
+                              padding: "2px 8px",
+                              borderRadius: 6,
+                            }}
+                          >
+                            {c.full}
+                          </code>
+
+                          <span
+                            className="text-sm flex-1 min-w-[180px]"
+                            style={{ color: isChecked ? "var(--text)" : "var(--faint)" }}
+                          >
+                            {c.description}
+                          </span>
+
+                          <span className="badge badge-standard">{c.category}</span>
+                        </label>
+                      );
+                    })}
                   </div>
                 </section>
               );
@@ -224,7 +336,14 @@ export default function CommandsPage() {
           </div>
         )}
       </main>
-      <JamieChat guildContext="User is browsing the full slash command catalog on the dashboard." />
+      <JamieChat
+        guildId={selectedGuild || undefined}
+        guildContext={
+          selectedGuild
+            ? `Managing command visibility for server ${guilds.find((g) => g.id === selectedGuild)?.name} (${selectedGuild}).`
+            : ""
+        }
+      />
     </div>
   );
 }
