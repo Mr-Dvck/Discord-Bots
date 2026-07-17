@@ -99,6 +99,32 @@ class LLMClient:
             log.error("LLM request failed: %s", e)
             return "*[LLM connection error]*"
 
+    async def chat_with_tools(self, messages: list[dict], tools: list[dict] = None) -> dict:
+        """Send a request to OpenRouter with tools support."""
+        if not self.session:
+            await self.start()
+        payload = {
+            "model": self.model,
+            "messages": messages,
+            "temperature": 0.5,
+            "max_tokens": 800,
+        }
+        if tools:
+            payload["tools"] = tools
+        
+        url = f"{self.api_base}/chat/completions"
+        try:
+            async with self.session.post(url, json=payload) as resp:
+                if resp.status != 200:
+                    error_text = await resp.text()
+                    log.error("LLM API error %d: %s", resp.status, error_text[:300])
+                    raise Exception(f"LLM API error: {resp.status}")
+                data = await resp.json()
+                return data["choices"][0]["message"]
+        except Exception as e:
+            log.error("LLM request failed: %s", e)
+            raise e
+
     async def generate_response(self, user_message: str, user_context: str = "",
                                  conversation_context: str = "",
                                  is_mention: bool = False) -> str:
