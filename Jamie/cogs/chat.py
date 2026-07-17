@@ -223,6 +223,101 @@ class ChatCog(commands.Cog):
 
         await interaction.followup.send(response)
 
+    # ── /rant — long + / - monologue ──────────────────────────────
+
+    @discord.app_commands.command(
+        name="rant",
+        description="Jamie goes on a long rant about a topic (+ praise or - roast)",
+    )
+    @discord.app_commands.describe(
+        topic="What Jamie should rant about",
+        polarity="+ for positive / praise, - for negative / roast",
+    )
+    @discord.app_commands.choices(
+        polarity=[
+            discord.app_commands.Choice(name="+ positive", value="+"),
+            discord.app_commands.Choice(name="- negative", value="-"),
+        ]
+    )
+    async def rant(
+        self,
+        interaction: discord.Interaction,
+        topic: str,
+        polarity: discord.app_commands.Choice[str],
+    ):
+        """Long first-person rant, up to 4000 characters, split across messages."""
+        llm = self.bot.llm
+        if not llm:
+            await interaction.response.send_message(
+                "LLM not ready yet.", ephemeral=True
+            )
+            return
+
+        topic = (topic or "").strip()
+        if not topic:
+            await interaction.response.send_message(
+                "Give me a topic to rant about.", ephemeral=True
+            )
+            return
+        if len(topic) > 200:
+            topic = topic[:200]
+
+        pol = polarity.value if polarity else "+"
+        await interaction.response.defer(thinking=True)
+
+        try:
+            text = await llm.generate_rant(topic, pol)
+        except Exception as e:
+            log.exception("Rant failed")
+            await interaction.followup.send(f"*[Rant failed: {e}]*")
+            return
+
+        text = (text or "").strip()
+        if not text:
+            await interaction.followup.send("*[Empty rant — try again]*")
+            return
+
+        # Cap at 4000 chars total
+        if len(text) > 4000:
+            text = text[:3997].rstrip() + "..."
+
+        # Discord message limit 2000 — split into up to 2 chunks
+        chunks: list[str] = []
+        remaining = text
+        while remaining:
+            if len(remaining) <= 2000:
+                chunks.append(remaining)
+                break
+            split_at = remaining[:2000].rfind("\n\n")
+            if split_at < 400:
+                split_at = remaining[:2000].rfind("\n")
+            if split_at < 400:
+                split_at = remaining[:2000].rfind(". ")
+                if split_at > 400:
+                    split_at += 1  # include period
+            if split_at < 400:
+                split_at = 1997
+            chunks.append(remaining[: split_at + 1].rstrip())
+            remaining = remaining[split_at + 1 :].lstrip()
+
+        header = f"**Rant {'+' if pol == '+' else '−'}** · _{topic}_\n\n"
+        # Attach header only if it fits first chunk
+        first = chunks[0] if chunks else ""
+        if len(header) + len(first) <= 2000:
+            chunks[0] = header + first
+        else:
+            await interaction.followup.send(header.rstrip())
+
+        for i, chunk in enumerate(chunks):
+            if not chunk:
+                continue
+            if i == 0 and chunks[0].startswith("**Rant"):
+                await interaction.followup.send(chunk)
+            elif i == 0:
+                await interaction.followup.send(chunk)
+            else:
+                await interaction.followup.send(chunk)
+
 
 async def setup(bot: commands.Bot):
     await bot.add_cog(ChatCog(bot))

@@ -1,0 +1,6 @@
+"Command","Description"
+"info","Get bot info"
+"stats","Get bot stats"
+"uptime","Get bot uptime"
+"ping","Ping the bot"
+"premium","Dyno premium information (responds in DM)"

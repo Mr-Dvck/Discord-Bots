@@ -1,6 +1,6 @@
 """
 Jamie Database Layer — SQLite async wrapper
-Tables: server_config, user_profiles, message_memory, server_map
+Tables: server_config, user_profiles, message_memory, server_map + mod/economy packs
 """
 
 import aiosqlite
@@ -8,10 +8,12 @@ import json
 import os
 from datetime import datetime, timezone
 
+from db.moderation import ModerationMixin
+
 DB_PATH = os.path.join(os.path.dirname(__file__), "..", "data", "jamie.db")
 
 
-class JamieDatabase:
+class JamieDatabase(ModerationMixin):
     def __init__(self, db_path: str = None):
         self.db_path = db_path or DB_PATH
         self._conn: aiosqlite.Connection | None = None
@@ -23,6 +25,7 @@ class JamieDatabase:
         self._conn = await aiosqlite.connect(self.db_path)
         self._conn.row_factory = aiosqlite.Row
         await self._run_migrations()
+        await self._mod_migrations()
 
     async def close(self):
         if self._conn:

@@ -488,7 +488,14 @@ export default function BuilderPage() {
           </div>
         )}
       </main>
-      <JamieChat guildContext={selectedGuild ? `Building server: ${guilds.find(g => g.id === selectedGuild)?.name}` : ""} />
+      <JamieChat
+        guildId={selectedGuild || undefined}
+        guildContext={
+          selectedGuild
+            ? `Building server: ${guilds.find((g) => g.id === selectedGuild)?.name} (${selectedGuild})`
+            : ""
+        }
+      />
     </div>
   );
 }

@@ -250,6 +250,7 @@ class UtilityCog(commands.Cog):
             value=(
                 "`/talk <message>` — Talk to me directly\n"
                 "`/ask <query>` — Ask about someone/something\n"
+                "`/rant <topic> +/-` — Long positive or negative rant\n"
                 "@Jamie — Mention me anywhere to talk"
             ),
             inline=False,
@@ -270,7 +271,22 @@ class UtilityCog(commands.Cog):
                 "`/profile [user]` — View a user's profile\n"
                 "`/servermap` — View the server map\n"
                 "`/remember <query>` — Search my memory\n"
-                "`/note <user> <note>` — Add a note (admin)"
+                "`/note <user> <note>` — Add a profile note (admin)\n"
+                "`/stats` — Server memory stats"
+            ),
+            inline=False,
+        )
+
+        embed.add_field(
+            name="📦 Command packs (slash groups)",
+            value=(
+                "`/economy` — daily, work, pay\n"
+                "`/bot` — info, stats, uptime, ping, premium\n"
+                "`/manage` — roles, purge, announce, modules, giveaway…\n"
+                "`/mod` — ban, kick, mute, warn, lock…\n"
+                "`/modlog` — cases, warnings, notes, modstats\n"
+                "`/ranks` — joinable ranks + role list/info\n"
+                "`/misc` — afk, whois, remindme, serverinfo, roll…"
             ),
             inline=False,
         )

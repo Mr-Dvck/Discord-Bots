@@ -30,6 +30,13 @@ A sentient Discord bot that memorizes every user, maps the entire server, monito
 | `/note <user> <note>` | Add a note to a user (admin) |
 | `/stats` | View server statistics |
 | `/help` | Show all commands |
+| `/economy *` | daily, work, pay |
+| `/bot *` | info, stats, uptime, ping, premium |
+| `/manage *` | roles, purge, announce, modules, giveaway… |
+| `/mod *` | ban, kick, mute, warn, lock, softban… |
+| `/modlog *` | cases, warnings, notes, modstats |
+| `/ranks *` | addrank, rank, list, roles, roleinfo |
+| `/misc *` | afk, whois, remindme, serverinfo, roll… |
 
 ## Dashboard
 

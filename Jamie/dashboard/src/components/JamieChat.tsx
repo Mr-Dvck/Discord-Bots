@@ -2,18 +2,44 @@
 
 import { useState, useRef, useEffect } from "react";
 
+interface PendingAction {
+  id: string;
+  tool: string;
+  args: Record<string, unknown>;
+  summary: string;
+  destructive: boolean;
+}
+
+interface ExecutedAction {
+  id: string;
+  tool: string;
+  summary: string;
+  ok: boolean;
+  error?: string;
+}
+
 interface Message {
   role: "user" | "assistant";
   content: string;
   timestamp: number;
+  pending?: PendingAction[];
+  executed?: ExecutedAction[];
+  pendingResolved?: "confirmed" | "cancelled";
 }
 
-export default function JamieChat({ guildContext }: { guildContext?: string }) {
+export default function JamieChat({
+  guildContext,
+  guildId,
+}: {
+  guildContext?: string;
+  guildId?: string;
+}) {
   const [open, setOpen] = useState(false);
   const [messages, setMessages] = useState<Message[]>([
     {
       role: "assistant",
-      content: "Yo. I'm Jamie. What do you need? Tell me how you want the server set up and I'll make it happen.",
+      content:
+        "Yo. I'm Jamie — full admin on this bot. Tell me to build anything: channels, roles, games, perms, messages, kicks, structure… I execute it. Only nukes (delete / ban / bulk wipe / full rebuild) need your Confirm first.",
       timestamp: Date.now(),
     },
   ]);
@@ -24,7 +50,7 @@ export default function JamieChat({ guildContext }: { guildContext?: string }) {
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, [messages]);
+  }, [messages, loading]);
 
   useEffect(() => {
     if (open) inputRef.current?.focus();
@@ -39,7 +65,8 @@ export default function JamieChat({ guildContext }: { guildContext?: string }) {
       timestamp: Date.now(),
     };
 
-    setMessages((prev) => [...prev, userMsg]);
+    const nextHistory = [...messages, userMsg];
+    setMessages(nextHistory);
     setInput("");
     setLoading(true);
 
@@ -48,11 +75,15 @@ export default function JamieChat({ guildContext }: { guildContext?: string }) {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          messages: [...messages, userMsg].map((m) => ({
-            role: m.role,
-            content: m.content,
-          })),
+          mode: "chat",
+          messages: nextHistory
+            .filter((m) => m.role === "user" || m.role === "assistant")
+            .map((m) => ({
+              role: m.role,
+              content: m.content,
+            })),
           context: guildContext || "",
+          guildId: guildId || "",
         }),
       });
 
@@ -63,16 +94,19 @@ export default function JamieChat({ guildContext }: { guildContext?: string }) {
         ...prev,
         {
           role: "assistant",
-          content: data.response,
+          content: data.response || "…",
           timestamp: Date.now(),
+          pending: data.pending?.length ? data.pending : undefined,
+          executed: data.executed?.length ? data.executed : undefined,
         },
       ]);
-    } catch (e: any) {
+    } catch (e: unknown) {
+      const message = e instanceof Error ? e.message : String(e);
       setMessages((prev) => [
         ...prev,
         {
           role: "assistant",
-          content: `*[Error: ${e.message}]*`,
+          content: `*[Error: ${message}]*`,
           timestamp: Date.now(),
         },
       ]);
@@ -81,9 +115,91 @@ export default function JamieChat({ guildContext }: { guildContext?: string }) {
     }
   }
 
+  async function confirmPending(messageIndex: number, actions: PendingAction[]) {
+    if (loading) return;
+    setLoading(true);
+
+    try {
+      const history = messages.slice(0, messageIndex + 1).map((m) => ({
+        role: m.role,
+        content: m.content,
+      }));
+
+      const res = await fetch("/api/chat", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          mode: "confirm",
+          actions,
+          messages: history,
+          context: guildContext || "",
+          guildId: guildId || "",
+        }),
+      });
+
+      const data = await res.json();
+      if (data.error) throw new Error(data.error);
+
+      setMessages((prev) => {
+        const copy = [...prev];
+        if (copy[messageIndex]) {
+          copy[messageIndex] = {
+            ...copy[messageIndex],
+            pending: undefined,
+            pendingResolved: "confirmed",
+            executed: data.executed?.length
+              ? data.executed
+              : copy[messageIndex].executed,
+          };
+        }
+        return [
+          ...copy,
+          {
+            role: "assistant",
+            content: data.response || "Done.",
+            timestamp: Date.now(),
+            executed: data.executed?.length ? data.executed : undefined,
+          },
+        ];
+      });
+    } catch (e: unknown) {
+      const message = e instanceof Error ? e.message : String(e);
+      setMessages((prev) => [
+        ...prev,
+        {
+          role: "assistant",
+          content: `*[Confirm failed: ${message}]*`,
+          timestamp: Date.now(),
+        },
+      ]);
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  function cancelPending(messageIndex: number) {
+    setMessages((prev) => {
+      const copy = [...prev];
+      if (copy[messageIndex]) {
+        copy[messageIndex] = {
+          ...copy[messageIndex],
+          pending: undefined,
+          pendingResolved: "cancelled",
+        };
+      }
+      return [
+        ...copy,
+        {
+          role: "assistant",
+          content: "Cool. Scrubbed those pending moves. Nothing got deleted or bulk-built.",
+          timestamp: Date.now(),
+        },
+      ];
+    });
+  }
+
   return (
     <>
-      {/* Chat toggle button — bottom right */}
       <button
         onClick={() => setOpen(!open)}
         className="fixed bottom-6 right-6 z-50 flex items-center justify-center rounded-full shadow-lg transition-all hover:scale-105"
@@ -96,17 +212,17 @@ export default function JamieChat({ guildContext }: { guildContext?: string }) {
           fontSize: "1.5rem",
           boxShadow: "0 8px 32px rgba(57,183,196,0.3)",
         }}
+        aria-label={open ? "Close Jamie chat" : "Open Jamie chat"}
       >
         {open ? "✕" : "🔥"}
       </button>
 
-      {/* Chat panel */}
       {open && (
         <div
           className="fixed bottom-24 right-6 z-50 flex flex-col animate-slide"
           style={{
-            width: 380,
-            height: 520,
+            width: 400,
+            height: 560,
             background: "var(--surface)",
             border: "1px solid var(--line)",
             borderRadius: "var(--radius-lg)",
@@ -114,7 +230,6 @@ export default function JamieChat({ guildContext }: { guildContext?: string }) {
             overflow: "hidden",
           }}
         >
-          {/* Header */}
           <div
             className="flex items-center gap-3 px-4 py-3"
             style={{
@@ -138,7 +253,8 @@ export default function JamieChat({ guildContext }: { guildContext?: string }) {
                 Jamie
               </div>
               <div className="text-xs" style={{ color: "var(--faint)" }}>
-                Private Chat
+                Dashboard operator
+                {guildId ? " · server locked" : ""}
               </div>
             </div>
             <div
@@ -147,57 +263,132 @@ export default function JamieChat({ guildContext }: { guildContext?: string }) {
             />
           </div>
 
-          {/* Messages */}
           <div
             className="flex-1 overflow-y-auto px-4 py-3 space-y-3"
             style={{ background: "var(--bg)" }}
           >
             {messages.map((msg, i) => (
-              <div
-                key={i}
-                className="flex gap-2 animate-fade"
-                style={{
-                  flexDirection: msg.role === "user" ? "row-reverse" : "row",
-                }}
-              >
-                {/* Avatar */}
+              <div key={`${msg.timestamp}-${i}`} className="space-y-2">
                 <div
-                  className="flex items-center justify-center rounded-full text-xs shrink-0"
+                  className="flex gap-2 animate-fade"
                   style={{
-                    width: 28,
-                    height: 28,
-                    background:
-                      msg.role === "assistant"
-                        ? "var(--primary-dim)"
-                        : "var(--warn-dim)",
-                    border:
-                      msg.role === "assistant"
-                        ? "1px solid rgba(57,183,196,0.3)"
-                        : "1px solid rgba(240,179,90,0.3)",
-                    color:
-                      msg.role === "assistant"
-                        ? "var(--primary)"
-                        : "var(--warn)",
-                    fontSize: "0.7rem",
+                    flexDirection: msg.role === "user" ? "row-reverse" : "row",
                   }}
                 >
-                  {msg.role === "assistant" ? "🔥" : "👤"}
+                  <div
+                    className="flex items-center justify-center rounded-full text-xs shrink-0"
+                    style={{
+                      width: 28,
+                      height: 28,
+                      background:
+                        msg.role === "assistant"
+                          ? "var(--primary-dim)"
+                          : "var(--warn-dim)",
+                      border:
+                        msg.role === "assistant"
+                          ? "1px solid rgba(57,183,196,0.3)"
+                          : "1px solid rgba(240,179,90,0.3)",
+                      color:
+                        msg.role === "assistant"
+                          ? "var(--primary)"
+                          : "var(--warn)",
+                      fontSize: "0.7rem",
+                    }}
+                  >
+                    {msg.role === "assistant" ? "🔥" : "👤"}
+                  </div>
+
+                  <div
+                    className="max-w-[80%] rounded-xl px-3 py-2 text-sm whitespace-pre-wrap"
+                    style={{
+                      background:
+                        msg.role === "user"
+                          ? "var(--surface3)"
+                          : "var(--surface2)",
+                      border: "1px solid var(--line)",
+                      color: "var(--text)",
+                    }}
+                  >
+                    {msg.content}
+                  </div>
                 </div>
 
-                {/* Bubble */}
-                <div
-                  className="max-w-[75%] rounded-xl px-3 py-2 text-sm"
-                  style={{
-                    background:
-                      msg.role === "user"
-                        ? "var(--surface3)"
-                        : "var(--surface2)",
-                    border: "1px solid var(--line)",
-                    color: "var(--text)",
-                  }}
-                >
-                  {msg.content}
-                </div>
+                {msg.executed && msg.executed.length > 0 && (
+                  <div
+                    className="ml-9 rounded-lg px-3 py-2 text-xs space-y-1"
+                    style={{
+                      background: "var(--accent-dim)",
+                      border: "1px solid rgba(125,211,167,0.25)",
+                    }}
+                  >
+                    <div className="font-semibold" style={{ color: "var(--accent)" }}>
+                      Ran
+                    </div>
+                    {msg.executed.map((ex) => (
+                      <div
+                        key={ex.id}
+                        style={{ color: ex.ok ? "var(--muted)" : "var(--danger)" }}
+                      >
+                        {ex.ok ? "✓" : "✕"} {ex.summary}
+                        {!ex.ok && ex.error ? ` — ${ex.error}` : ""}
+                      </div>
+                    ))}
+                  </div>
+                )}
+
+                {msg.pending && msg.pending.length > 0 && (
+                  <div
+                    className="ml-9 rounded-lg px-3 py-2 text-xs space-y-2"
+                    style={{
+                      background: "var(--warn-dim)",
+                      border: "1px solid rgba(240,179,90,0.3)",
+                    }}
+                  >
+                    <div className="font-semibold" style={{ color: "var(--warn)" }}>
+                      Needs confirmation
+                    </div>
+                    {msg.pending.map((p) => (
+                      <div key={p.id} style={{ color: "var(--muted)" }}>
+                        • {p.summary}
+                      </div>
+                    ))}
+                    <div className="flex gap-2 pt-1">
+                      <button
+                        className="btn btn-primary"
+                        style={{ fontSize: "0.75rem", padding: "4px 10px" }}
+                        disabled={loading}
+                        onClick={() => confirmPending(i, msg.pending!)}
+                      >
+                        Confirm
+                      </button>
+                      <button
+                        className="btn btn-ghost"
+                        style={{ fontSize: "0.75rem", padding: "4px 10px" }}
+                        disabled={loading}
+                        onClick={() => cancelPending(i)}
+                      >
+                        Cancel
+                      </button>
+                    </div>
+                  </div>
+                )}
+
+                {msg.pendingResolved === "confirmed" && (
+                  <div
+                    className="ml-9 text-xs"
+                    style={{ color: "var(--accent)" }}
+                  >
+                    ✓ Confirmed
+                  </div>
+                )}
+                {msg.pendingResolved === "cancelled" && (
+                  <div
+                    className="ml-9 text-xs"
+                    style={{ color: "var(--faint)" }}
+                  >
+                    Cancelled
+                  </div>
+                )}
               </div>
             ))}
 
@@ -222,14 +413,13 @@ export default function JamieChat({ guildContext }: { guildContext?: string }) {
                     color: "var(--faint)",
                   }}
                 >
-                  <span className="animate-pulse">Thinking...</span>
+                  <span className="animate-pulse">Working the dashboard...</span>
                 </div>
               </div>
             )}
             <div ref={messagesEndRef} />
           </div>
 
-          {/* Input */}
           <div
             className="px-3 py-3"
             style={{
@@ -244,7 +434,11 @@ export default function JamieChat({ guildContext }: { guildContext?: string }) {
                 value={input}
                 onChange={(e) => setInput(e.target.value)}
                 onKeyDown={(e) => e.key === "Enter" && sendMessage()}
-                placeholder="Tell Jamie what you need..."
+                placeholder={
+                  guildId
+                    ? "e.g. make a #general channel..."
+                    : "e.g. list my servers..."
+                }
                 className="input flex-1"
                 style={{ padding: "8px 12px", fontSize: "0.85rem" }}
                 disabled={loading}

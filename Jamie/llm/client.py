@@ -118,6 +118,55 @@ class LLMClient:
 
         return await self.chat(messages, temperature=0.9, max_tokens=500)
 
+    async def generate_rant(self, topic: str, polarity: str) -> str:
+        """
+        Generate a long first-person rant about topic.
+        polarity: '+' for positive praise rant, '-' for negative tear-down rant.
+        Target length: as long as possible up to ~4000 Discord-safe characters.
+        """
+        polarity = (polarity or "+").strip()
+        if polarity not in ("+", "-"):
+            polarity = "+"
+
+        if polarity == "+":
+            angle = (
+                "POSITIVE / PRO rant. Hype, glorify, defend, romanticize, "
+                "and go full worship-energy on the topic. Still sound like Jamie — "
+                "not a corporate cheerleader. Make it feel earned, obsessive, electric."
+            )
+        else:
+            angle = (
+                "NEGATIVE / CON rant. Tear it down, roast it, eviscerate it, "
+                "mock it, expose how hollow or shitty it is. Still sound like Jamie — "
+                "not a school essay. Make it feel personal, vicious, alive."
+            )
+
+        system = (
+            JAMIE_SYSTEM_PROMPT
+            + "\n\n--- RANT MODE ---\n"
+            + "You are delivering a pure rant monologue. First person only. "
+            + "No title, no bullet list, no 'here's my rant', no meta. "
+            + "Write a long continuous rant (aim for roughly 2800–3800 characters — "
+            + "fill the space, do not stop after two paragraphs). "
+            + "Stay on topic. Swear, digress, then slam back. "
+            + f"Polarity instruction: {angle}"
+        )
+
+        user = (
+            f"Rant topic: {topic}\n"
+            f"Polarity: {polarity}\n"
+            "Go. Full rant. Long. No preamble."
+        )
+
+        messages = [
+            {"role": "system", "content": system},
+            {"role": "user", "content": user},
+        ]
+
+        # ~1000 tokens ≈ long rant; hard-cap later at 4000 chars
+        return await self.chat(messages, temperature=0.95, max_tokens=1400)
+
+
     async def generate_image_prompt(self, user_request: str) -> str:
         """Use the LLM to turn a user's image request into a detailed image generation prompt."""
         messages = [

@@ -81,15 +81,21 @@ class SetupCog(commands.Cog):
     @app_commands.describe(channel="The channel where Jamie will live and respond")
     @app_commands.checks.has_permissions(administrator=True)
     async def setup(self, interaction: discord.Interaction, channel: discord.TextChannel):
+        # Acknowledge immediately (Discord kills unacked interactions after 3s)
+        await interaction.response.defer(thinking=True)
+
         db = self.bot.db
+        me = interaction.guild.me
+        if me is None:
+            await interaction.followup.send("❌ I'm not fully in this server yet. Try again in a few seconds.")
+            return
 
         # Check bot can see and send in that channel
-        perms = channel.permissions_for(interaction.guild.me)
+        perms = channel.permissions_for(me)
         if not (perms.send_messages and perms.view_channel and perms.embed_links):
-            await interaction.response.send_message(
+            await interaction.followup.send(
                 f"❌ I can't properly operate in {channel.mention} — I need "
                 "View Channel, Send Messages, and Embed Links permissions there.",
-                ephemeral=True,
             )
             return
 
@@ -108,9 +114,10 @@ class SetupCog(commands.Cog):
             ),
             color=0x7DD3A7,
         )
-        embed.set_thumbnail(url=self.bot.user.display_avatar.url)
+        if self.bot.user and self.bot.user.display_avatar:
+            embed.set_thumbnail(url=self.bot.user.display_avatar.url)
 
-        await interaction.response.send_message(embed=embed)
+        await interaction.followup.send(embed=embed)
 
         # Send a welcome message in the dedicated channel
         welcome = discord.Embed(
@@ -127,8 +134,15 @@ class SetupCog(commands.Cog):
         except discord.Forbidden:
             pass
 
-        # Trigger initial server cartography
-        await self._cartograph_server(interaction.guild)
+        # Map server after responding so the interaction never times out
+        try:
+            await self._cartograph_server(interaction.guild)
+            await interaction.followup.send(
+                f"🗺️ Mapped **{interaction.guild.name}** — channels + members are locked in."
+            )
+        except Exception as e:
+            log.exception("Cartography failed")
+            await interaction.followup.send(f"Setup saved, but mapping hit a snag: `{e}`")
 
     # ── /setchannel — change Jamie's channel ──────────────────────
 

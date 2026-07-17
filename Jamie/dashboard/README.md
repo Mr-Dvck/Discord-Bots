@@ -1,36 +1,44 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# 🔥 Jamie Dashboard
 
-## Getting Started
+A Dyno-style web dashboard for managing the Jamie Discord bot. Built with Next.js 16, TypeScript, and Tailwind CSS.
 
-First, run the development server:
+## Features
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
-```
-
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
-
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
-
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
-
-## Learn More
-
-To learn more about Next.js, take a look at the following resources:
-
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+- **📊 Dashboard** — Overview of all servers, stats, quick actions
+- **🗺️ Servers** — Browse and manage individual servers (channels, roles, members)
+- **🏗️ Server Builder** — Build or revamp entire servers from scratch (AI-generated or manual)
+- **⌨️ Commands** — Full slash catalog (`/economy`, `/mod`, `/manage`, `/misc`, …)
+- **⚙️ Modules** — Toggle command packs (moderation, economy, ranks, misc, …)
+- **🔥 Jamie Chat** — Private chat that can operate the dashboard via tools
 
 ## Deploy on Vercel
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+1. Push this repo to GitHub
+2. Connect to Vercel
+3. Set environment variables:
+   - `DISCORD_BOT_TOKEN_JAMIE` — Your Discord bot token
+   - `OPENROUTER_API_KEY` — OpenRouter API key for LLM
+   - `JAMIE_LLM_MODEL` — LLM model (e.g. `meta-llama/llama-3.3-70b-instruct`)
+   - `JAMIE_LLM_API_BASE` — LLM API base URL (e.g. `https://openrouter.ai/api/v1`)
+4. Deploy
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+## Local Development
+
+```bash
+npm install
+npm run dev
+```
+
+Open [http://localhost:3000](http://localhost:3000).
+
+## API Routes
+
+| Route | Method | Description |
+|-------|--------|-------------|
+| `/api/guilds` | GET | List all bot guilds |
+| `/api/guilds/[id]` | GET | Guild details (channels, roles, members) |
+| `/api/guilds/[id]/channels` | POST/PATCH/DELETE | Channel CRUD |
+| `/api/guilds/[id]/roles` | POST/PATCH/DELETE | Role CRUD |
+| `/api/guilds/[id]/build` | POST | Bulk build server from blueprint |
+| `/api/chat` | POST | Chat with Jamie |
+| `/api/generate-blueprint` | POST | AI-generate server blueprint |

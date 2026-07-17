@@ -53,6 +53,25 @@ export default function ServersPage() {
 
         {loading ? (
           <p style={{ color: "var(--faint)" }}>Loading...</p>
+        ) : filtered.length === 0 ? (
+          <div className="card space-y-3">
+            <p style={{ color: "var(--faint)" }}>
+              {guilds.length === 0
+                ? "No servers found. Invite Jamie with the bot scope so it can join and manage servers."
+                : "No servers match your search."}
+            </p>
+            {guilds.length === 0 && (
+              <a
+                href="https://discord.com/oauth2/authorize?client_id=1527491367062999111&permissions=8&integration_type=0&scope=bot%20applications.commands"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="btn btn-primary"
+                style={{ textDecoration: "none" }}
+              >
+                ➕ Invite Jamie to a Server
+              </a>
+            )}
+          </div>
         ) : (
           <div className="grid gap-3">
             {filtered.map((guild) => (

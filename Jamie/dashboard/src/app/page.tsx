@@ -16,6 +16,11 @@ export default function DashboardPage() {
   const [guilds, setGuilds] = useState<Guild[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const [apiOnline, setApiOnline] = useState(false);
+
+  // Bot application ID (same as bot user for standard bots)
+  const inviteUrl =
+    "https://discord.com/oauth2/authorize?client_id=1527491367062999111&permissions=8&integration_type=0&scope=bot%20applications.commands";
 
   useEffect(() => {
     fetch("/api/guilds")
@@ -23,8 +28,12 @@ export default function DashboardPage() {
       .then((data) => {
         if (data.error) throw new Error(data.error);
         setGuilds(Array.isArray(data) ? data : []);
+        setApiOnline(true);
       })
-      .catch((e) => setError(e.message))
+      .catch((e) => {
+        setError(e.message);
+        setApiOnline(false);
+      })
       .finally(() => setLoading(false));
   }, []);
 
@@ -111,13 +120,25 @@ export default function DashboardPage() {
             <div className="flex items-center gap-2">
               <div
                 className="w-3 h-3 rounded-full"
-                style={{ background: "var(--accent)" }}
+                style={{
+                  background: loading
+                    ? "var(--warn)"
+                    : apiOnline
+                      ? "var(--accent)"
+                      : "var(--danger)",
+                }}
               />
               <span
                 className="text-lg font-bold"
-                style={{ color: "var(--accent)" }}
+                style={{
+                  color: loading
+                    ? "var(--warn)"
+                    : apiOnline
+                      ? "var(--accent)"
+                      : "var(--danger)",
+                }}
               >
-                Online
+                {loading ? "Checking..." : apiOnline ? "Online" : "Offline"}
               </span>
             </div>
           </div>
@@ -140,9 +161,22 @@ export default function DashboardPage() {
           )}
 
           {!loading && !error && guilds.length === 0 && (
-            <p style={{ color: "var(--faint)" }}>
-              No servers found. Make sure Jamie is in your servers.
-            </p>
+            <div className="space-y-3">
+              <p style={{ color: "var(--faint)" }}>
+                No servers found. Jamie isn&apos;t in any Discord servers yet.
+                Invite the bot with the <strong>bot</strong> scope (not
+                commands-only) so the dashboard can manage channels and roles.
+              </p>
+              <a
+                href={inviteUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="btn btn-primary"
+                style={{ textDecoration: "none" }}
+              >
+                ➕ Invite Jamie to a Server
+              </a>
+            </div>
           )}
 
           <div className="space-y-2">
@@ -194,7 +228,66 @@ export default function DashboardPage() {
         </div>
 
         {/* Quick actions */}
-        <div className="grid grid-cols-2 gap-4 mt-6">
+        <div
+          className="grid gap-4 mt-6"
+          style={{ gridTemplateColumns: "repeat(auto-fill, minmax(220px, 1fr))" }}
+        >
+          <a
+            href="/images"
+            className="card flex items-center gap-4 transition-all hover:scale-[1.01] cursor-pointer"
+            style={{ textDecoration: "none" }}
+          >
+            <div
+              className="flex items-center justify-center rounded-xl text-xl"
+              style={{
+                width: 44,
+                height: 44,
+                background: "var(--premium-dim)",
+                border: "1px solid rgba(217,138,255,0.3)",
+              }}
+            >
+              🎨
+            </div>
+            <div>
+              <div
+                className="font-bold text-sm"
+                style={{ color: "var(--premium)" }}
+              >
+                Images
+              </div>
+              <div className="text-xs" style={{ color: "var(--faint)" }}>
+                Welcome banners & art
+              </div>
+            </div>
+          </a>
+          <a
+            href="/commands"
+            className="card flex items-center gap-4 transition-all hover:scale-[1.01] cursor-pointer"
+            style={{ textDecoration: "none" }}
+          >
+            <div
+              className="flex items-center justify-center rounded-xl text-xl"
+              style={{
+                width: 44,
+                height: 44,
+                background: "var(--primary-dim)",
+                border: "1px solid rgba(57,183,196,0.3)",
+              }}
+            >
+              ⌨️
+            </div>
+            <div>
+              <div
+                className="font-bold text-sm"
+                style={{ color: "var(--primary)" }}
+              >
+                Commands
+              </div>
+              <div className="text-xs" style={{ color: "var(--faint)" }}>
+                Browse all slash packs
+              </div>
+            </div>
+          </a>
           <a
             href="/builder"
             className="card flex items-center gap-4 transition-all hover:scale-[1.01] cursor-pointer"
@@ -247,7 +340,7 @@ export default function DashboardPage() {
                 Modules
               </div>
               <div className="text-xs" style={{ color: "var(--faint)" }}>
-                Configure Jamie's behavior
+                Toggle command packs
               </div>
             </div>
           </a>

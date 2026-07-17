@@ -54,12 +54,17 @@ class JamieBot(commands.Bot):
         self.db = None
         self.llm = None
         self.image_gen = None
+        self.started_at = None
 
     async def setup_hook(self):
         """Initialize database, LLM, image generator, and load cogs."""
+        from datetime import datetime, timezone
+
         from db.database import JamieDatabase
         from llm.client import LLMClient
         from image.generator import ImageGenerator
+
+        self.started_at = datetime.now(timezone.utc)
 
         # Initialize shared services
         self.db = JamieDatabase()
@@ -85,6 +90,28 @@ class JamieBot(commands.Bot):
                 log.info("Loaded cog: %s", ext)
             except Exception as e:
                 log.error("Failed to load cog %s: %s", ext, e)
+
+        # Always reply on slash errors so Discord never shows "application did not respond"
+        @self.tree.error
+        async def on_app_command_error(
+            interaction: discord.Interaction,
+            error: discord.app_commands.AppCommandError,
+        ):
+            log.exception("Slash command error: %s", error)
+            msg = "Something broke running that command."
+            if isinstance(error, discord.app_commands.CheckFailure):
+                msg = str(error) or "You don't have permission to use that command."
+            elif isinstance(error, discord.app_commands.CommandOnCooldown):
+                msg = f"Slow down — try again in {error.retry_after:.1f}s."
+            elif isinstance(error, discord.app_commands.CommandInvokeError):
+                msg = f"Command failed: {error.original}"
+            try:
+                if interaction.response.is_done():
+                    await interaction.followup.send(msg, ephemeral=True)
+                else:
+                    await interaction.response.send_message(msg, ephemeral=True)
+            except Exception:
+                log.exception("Failed to send error response")
 
         # Sync slash commands
         try:
@@ -119,6 +146,9 @@ class JamieBot(commands.Bot):
         """Handle joining a new guild."""
         log.info("Joined new guild: %s (%d)", guild.name, guild.id)
 
+    async def on_error(self, event_method: str, *args, **kwargs):
+        log.exception("Unhandled error in event %s", event_method)
+
     async def close(self):
         """Clean shutdown."""
         log.info("Shutting down Jamie...")
@@ -140,21 +170,16 @@ def main():
         sys.exit(1)
 
     bot = JamieBot()
-
-    async def runner():
-        try:
-            async with bot:
-                await bot.start(token)
-        except KeyboardInterrupt:
-            log.info("Keyboard interrupt — shutting down")
-        finally:
-            await bot.close()
-
-    try:
-        asyncio.run(runner())
-    except KeyboardInterrupt:
-        pass
+    # bot.run keeps the process alive cleanly (no double-close with async with)
+    bot.run(token, log_handler=None)
 
 
 if __name__ == "__main__":
+    # File logging so detached restarts stay diagnosable
+    log_path = Path(__file__).parent / "jamie-bot.err"
+    fh = logging.FileHandler(log_path, encoding="utf-8")
+    fh.setFormatter(
+        logging.Formatter("%(asctime)s [%(name)s] %(levelname)s: %(message)s", "%H:%M:%S")
+    )
+    logging.getLogger().addHandler(fh)
     main()

@@ -491,7 +491,7 @@ export default function ServerDetailPage() {
           </div>
         )}
       </main>
-      <JamieChat guildContext={guildContext} />
+      <JamieChat guildContext={guildContext} guildId={guildId} />
     </div>
   );
 }
