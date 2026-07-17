@@ -30,9 +30,6 @@ class ChatCog(commands.Cog):
         if message.author.bot or not message.guild:
             return
 
-        if not await self.bot.is_owner(message.author):
-            return
-
         db = self.bot.db
         guild_id = message.guild.id
 
@@ -472,6 +469,8 @@ class ChatCog(commands.Cog):
             llm = self.bot.llm
             guild = message.guild
 
+            is_owner = await self.bot.is_owner(message.author)
+
             # 1. Build initial messages thread
             user_context = await db.build_user_context(message.author.id, guild.id)
             conversation_context = await db.build_conversation_context(message.channel.id, limit=15)
@@ -483,6 +482,9 @@ class ChatCog(commands.Cog):
                 system += f"\n\n--- RECENT CONVERSATION ---\n{conversation_context}"
             if is_mention:
                 system += "\n\n[Someone @mentioned you. Respond naturally as if you just got pulled into a conversation.]"
+            
+            if not is_owner:
+                system += "\n\n[IMPORTANT: This user is NOT the bot owner. You do NOT have access to any tools or administrative commands. You cannot perform actions like creating channels/roles, ban, kick, timeout, etc. If they ask you to perform any actions, reject them firmly, stating that you only obey the bot owner.]"
 
             thread = [
                 {"role": "system", "content": system},
@@ -495,7 +497,7 @@ class ChatCog(commands.Cog):
             
             try:
                 for step in range(max_steps):
-                    choice = await llm.chat_with_tools(thread, tools=self.BOT_TOOLS)
+                    choice = await llm.chat_with_tools(thread, tools=self.BOT_TOOLS if is_owner else None)
                     
                     # Add assistant message to history
                     assistant_msg = {
