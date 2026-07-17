@@ -156,3 +156,35 @@
 04:59:25 [jamie.memory] INFO: Running personality analysis cycle
 05:29:25 [jamie.memory] INFO: Running personality analysis cycle
 05:29:25 [jamie.memory] INFO: Running memory prune cycle
+05:53:37 [discord.client] WARNING: PyNaCl is not installed, voice will NOT be supported
+05:53:37 [discord.client] WARNING: davey is not installed, voice will NOT be supported
+05:53:37 [discord.client] INFO: logging in using static token
+05:53:38 [jamie] INFO: Database connected
+05:53:38 [jamie] INFO: LLM client started (model: meta-llama/llama-3.3-70b-instruct)
+05:53:38 [jamie] INFO: Image generator started
+05:53:38 [jamie] INFO: Loaded cog: cogs.chat
+05:53:38 [jamie] INFO: Loaded cog: cogs.counting
+05:53:38 [jamie] INFO: Loaded cog: cogs.economy
+05:53:38 [jamie] INFO: Loaded cog: cogs.events_extra
+05:53:38 [jamie] INFO: Loaded cog: cogs.format_utils
+05:53:38 [jamie] INFO: Loaded cog: cogs.image_cog
+05:53:38 [jamie] INFO: Loaded cog: cogs.info_cmds
+05:53:38 [jamie] INFO: Loaded cog: cogs.manage_cmds
+05:53:38 [jamie] INFO: Loaded cog: cogs.memory
+05:53:38 [jamie] INFO: Loaded cog: cogs.misc_cmds
+05:53:38 [jamie] INFO: Loaded cog: cogs.modlog_cmds
+05:53:38 [jamie] INFO: Loaded cog: cogs.mod_cmds
+05:53:38 [jamie] INFO: Loaded cog: cogs.roles_cmds
+05:53:38 [jamie] INFO: Loaded cog: cogs.setup
+05:53:38 [jamie] INFO: Loaded cog: cogs.utility
+05:53:38 [jamie] INFO: Loaded cog: cogs.welcome
+05:53:38 [jamie] INFO: Synced 20 global slash commands: ask, bot, economy, generate, help, imagine, manage, misc, mod, modlog, note, profile, ranks, rant, remember, servermap, setchannel, setup, stats, talk
+05:53:39 [discord.gateway] INFO: Shard ID None has connected to Gateway (Session ID: a9bb9992f3ee72d5a85b3fe1949dc8b7).
+05:53:41 [jamie] INFO: ════════════════════════════════════════
+05:53:41 [jamie] INFO:   JAMIE IS ONLINE
+05:53:41 [jamie] INFO:   Guilds: 1
+05:53:41 [jamie] INFO:   Users:  336
+05:53:41 [jamie] INFO: ════════════════════════════════════════
+05:53:41 [jamie.memory] INFO: Running personality analysis cycle
+05:53:41 [jamie.memory] INFO: Running memory prune cycle
+05:53:41 [jamie] INFO: Cleared guild command copies for Certified (1139997451835674667)
