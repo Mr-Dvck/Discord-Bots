@@ -288,10 +288,54 @@ class ChatCog(commands.Cog):
                 "description": "List some server members.",
                 "parameters": {"type": "object", "properties": {}}
             }
+        },
+        {
+            "type": "function",
+            "function": {
+                "name": "add_member_note",
+                "description": "Add a staff note about a user.",
+                "parameters": {
+                    "type": "object",
+                    "properties": {
+                        "user_id": {"type": "string", "description": "Snowflake ID of the user"},
+                        "content": {"type": "string", "description": "Note content to save"}
+                    },
+                    "required": ["user_id", "content"]
+                }
+            }
+        },
+        {
+            "type": "function",
+            "function": {
+                "name": "get_member_notes",
+                "description": "Get all staff notes taken for a user.",
+                "parameters": {
+                    "type": "object",
+                    "properties": {
+                        "user_id": {"type": "string", "description": "Snowflake ID of the user"}
+                    },
+                    "required": ["user_id"]
+                }
+            }
+        },
+        {
+            "type": "function",
+            "function": {
+                "name": "delete_member_note",
+                "description": "Delete a staff note by its ID.",
+                "parameters": {
+                    "type": "object",
+                    "properties": {
+                        "note_id": {"type": "integer", "description": "Numeric ID of the note"}
+                    },
+                    "required": ["note_id"]
+                }
+            }
         }
     ]
 
-    async def _execute_bot_tool(self, name: str, args: dict, guild: discord.Guild) -> dict:
+    async def _execute_bot_tool(self, name: str, args: dict, message: discord.Message) -> dict:
+        guild = message.guild
         try:
             if name == "create_channel":
                 ch_name = args.get("name")
@@ -453,6 +497,23 @@ class ChatCog(commands.Cog):
 
             elif name == "list_members":
                 return {"success": True, "members": [{"id": str(m.id), "name": str(m)} for m in guild.members[:100]]}
+
+            elif name == "add_member_note":
+                user_id = args.get("user_id")
+                content = args.get("content")
+                mod_id = message.author.id
+                nid = await self.bot.db.add_member_note(guild.id, int(user_id), mod_id, content)
+                return {"success": True, "note_id": nid}
+
+            elif name == "get_member_notes":
+                user_id = args.get("user_id")
+                notes = await self.bot.db.get_member_notes(guild.id, int(user_id))
+                return {"success": True, "notes": [{"id": n["id"], "content": n["content"], "created_at": n["created_at"]} for n in notes]}
+
+            elif name == "delete_member_note":
+                note_id = args.get("note_id")
+                ok = await self.bot.db.delete_member_note(guild.id, int(note_id))
+                return {"success": True if ok else False}
             
             else:
                 return {"error": f"Unknown tool: {name}"}
@@ -523,7 +584,7 @@ class ChatCog(commands.Cog):
                             args = {}
                         
                         log.info("Agent executing tool: %s with args %s", name, args)
-                        result = await self._execute_bot_tool(name, args, guild)
+                        result = await self._execute_bot_tool(name, args, message)
                         
                         # Append tool response
                         thread.append({

@@ -86,62 +86,7 @@ class ModlogCog(commands.GroupCog, group_name="modlog"):
             return
         await interaction.response.send_message(embed=embed("🗑️ Warning", f"Deleted warning `#{warn_id}`."))
 
-    @app_commands.command(name="note", description="Add note(s) about a member")
-    @admin_check()
-    async def note(self, interaction: discord.Interaction, user: discord.Member, content: str):
-        nid = await self.bot.db.add_member_note(
-            interaction.guild.id, user.id, interaction.user.id, content
-        )
-        await interaction.response.send_message(
-            embed=embed("📝 Note", f"Note `#{nid}` added for {user.mention}."),
-            ephemeral=True,
-        )
 
-    @app_commands.command(name="notes", description="Get notes for a user")
-    @admin_check()
-    async def notes(self, interaction: discord.Interaction, user: discord.Member):
-        rows = await self.bot.db.get_member_notes(interaction.guild.id, user.id)
-        if not rows:
-            await interaction.response.send_message(
-                embed=embed("📝 Notes", f"No notes for {user.mention}."), ephemeral=True
-            )
-            return
-        lines = [
-            f"• `#{r['id']}` by <@{r['mod_id']}> — {r['content'][:120]} ({r['created_at'][:16]})"
-            for r in rows
-        ]
-        await interaction.response.send_message(
-            embed=embed(f"📝 Notes · {user}", "\n".join(lines)), ephemeral=True
-        )
-
-    @app_commands.command(name="delnote", description="Delete a note about a member")
-    @admin_check()
-    async def delnote(self, interaction: discord.Interaction, note_id: int):
-        ok = await self.bot.db.delete_member_note(interaction.guild.id, note_id)
-        if not ok:
-            await interaction.response.send_message("Note not found.", ephemeral=True)
-            return
-        await interaction.response.send_message(embed=embed("🗑️ Note", f"Deleted note `#{note_id}`."), ephemeral=True)
-
-    @app_commands.command(name="clearnotes", description="Delete all notes for a member")
-    @admin_check()
-    async def clearnotes(self, interaction: discord.Interaction, user: discord.Member):
-        n = await self.bot.db.clear_member_notes(interaction.guild.id, user.id)
-        await interaction.response.send_message(
-            embed=embed("🧹 Notes", f"Cleared **{n}** note(s) for {user.mention}."),
-            ephemeral=True,
-        )
-
-    @app_commands.command(name="editnote", description="Edit a note about a member")
-    @admin_check()
-    async def editnote(self, interaction: discord.Interaction, note_id: int, content: str):
-        ok = await self.bot.db.edit_member_note(interaction.guild.id, note_id, content)
-        if not ok:
-            await interaction.response.send_message("Note not found.", ephemeral=True)
-            return
-        await interaction.response.send_message(
-            embed=embed("✏️ Note", f"Updated note `#{note_id}`."), ephemeral=True
-        )
 
     @app_commands.command(name="modstats", description="Get moderation statistics for a mod/admin")
     @admin_check()

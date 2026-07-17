@@ -196,31 +196,7 @@ class UtilityCog(commands.Cog):
 
         await interaction.response.send_message(embed=embed)
 
-    # ── /note — add a note to a user's profile ────────────────────
 
-    @app_commands.command(
-        name="note",
-        description="Add a note to a user's profile (admin only)"
-    )
-    @app_commands.describe(
-        user="The user to add a note to",
-        note="The note to add"
-    )
-    @app_commands.checks.has_permissions(administrator=True)
-    async def note(self, interaction: discord.Interaction, user: discord.Member, note: str):
-        """Add a note to a user's profile."""
-        db = self.bot.db
-
-        profile = await db.get_user_profile(user.id, interaction.guild_id)
-        existing = profile["notes"] if profile else ""
-        new_notes = f"{existing}\n[{interaction.user.display_name}]: {note}" if existing else f"[{interaction.user.display_name}]: {note}"
-
-        await db.update_user_notes(user.id, interaction.guild_id, new_notes)
-
-        await interaction.response.send_message(
-            f"📝 Note added to **{user.display_name}**'s profile.",
-            ephemeral=True,
-        )
 
     # ── /help — show all commands ─────────────────────────────────
 
