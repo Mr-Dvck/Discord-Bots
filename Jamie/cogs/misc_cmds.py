@@ -45,26 +45,7 @@ class MiscCog(commands.GroupCog, group_name="misc"):
         e.color = value
         await interaction.response.send_message(embed=e)
 
-    @app_commands.command(name="discrim", description="Show users with a certain discriminator")
-    async def discrim(self, interaction: discord.Interaction, discriminator: str = "0"):
-        if not interaction.guild:
-            await interaction.response.send_message("Server only.", ephemeral=True)
-            return
-        # Modern Discord: discriminator often "0"; match by legacy or last 4 of name if numeric
-        matches = [
-            m
-            for m in interaction.guild.members
-            if m.discriminator == discriminator or str(m.discriminator) == discriminator
-        ][:30]
-        if not matches:
-            await interaction.response.send_message(
-                embed=embed("Discriminators", f"No members with discrim `{discriminator}`.")
-            )
-            return
-        lines = [f"• {m} (`{m.id}`)" for m in matches]
-        await interaction.response.send_message(
-            embed=embed(f"Discrim #{discriminator}", "\n".join(lines))
-        )
+
 
     @app_commands.command(name="membercount", description="Get the server member count")
     async def membercount(self, interaction: discord.Interaction):
@@ -174,38 +155,7 @@ class MiscCog(commands.GroupCog, group_name="misc"):
         e.add_field(name="Created", value=discord.utils.format_dt(g.created_at, "R"), inline=False)
         await interaction.response.send_message(embed=e)
 
-    @app_commands.command(name="dynoavatar", description="Generate a Dyno-like avatar")
-    async def dynoavatar(self, interaction: discord.Interaction, user: discord.User | None = None):
-        user = user or interaction.user
-        e = embed("Dyno-style Avatar", f"Preview for {user.mention}")
-        e.color = JAMIE_COLOR
-        e.set_image(url=user.display_avatar.replace(size=256).url)
-        e.set_footer(text="Jamie · teal frame vibe")
-        await interaction.response.send_message(embed=e)
 
-    @app_commands.command(name="distance", description="Get distance between two coordinate sets")
-    @app_commands.describe(
-        lat1="Latitude 1", lon1="Longitude 1", lat2="Latitude 2", lon2="Longitude 2"
-    )
-    async def distance(
-        self,
-        interaction: discord.Interaction,
-        lat1: float,
-        lon1: float,
-        lat2: float,
-        lon2: float,
-    ):
-        # Haversine km
-        r = 6371.0
-        p1, p2 = math.radians(lat1), math.radians(lat2)
-        dp = math.radians(lat2 - lat1)
-        dl = math.radians(lon2 - lon1)
-        a = math.sin(dp / 2) ** 2 + math.cos(p1) * math.cos(p2) * math.sin(dl / 2) ** 2
-        c = 2 * math.atan2(math.sqrt(a), math.sqrt(1 - a))
-        km = r * c
-        await interaction.response.send_message(
-            embed=embed("📏 Distance", f"**{km:.2f} km** ({km * 0.621371:.2f} mi)")
-        )
 
     @app_commands.command(name="color", description="Show a color using hex")
     async def color(self, interaction: discord.Interaction, hex_color: str):
@@ -229,16 +179,7 @@ class MiscCog(commands.GroupCog, group_name="misc"):
             embed=embed(f"Emotes ({len(emojis)})", " ".join(lines) + more)
         )
 
-    @app_commands.command(name="covid", description="Get COVID-19 stats")
-    async def covid(self, interaction: discord.Interaction, country: str = "global"):
-        await interaction.response.send_message(
-            embed=embed(
-                "🦠 COVID-19",
-                f"Live stats APIs change frequently. For **{country}**, check "
-                f"[Our World in Data](https://ourworldindata.org/coronavirus) or WHO dashboards.\n\n"
-                "Jamie won't invent case numbers.",
-            )
-        )
+
 
     @app_commands.command(name="highlights", description="Get notified when a specific phrase is said")
     @app_commands.describe(

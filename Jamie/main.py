@@ -91,6 +91,12 @@ class JamieBot(commands.Bot):
             except Exception as e:
                 log.error("Failed to load cog %s: %s", ext, e)
 
+        @self.tree.interaction_check
+        async def global_interaction_check(interaction: discord.Interaction) -> bool:
+            if not await self.is_owner(interaction.user):
+                raise discord.app_commands.CheckFailure("Only the bot owner is authorized to use Jamie.")
+            return True
+
         # Always reply on slash errors so Discord never shows "application did not respond"
         @self.tree.error
         async def on_app_command_error(

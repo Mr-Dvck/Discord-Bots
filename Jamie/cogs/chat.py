@@ -30,6 +30,9 @@ class ChatCog(commands.Cog):
         if message.author.bot or not message.guild:
             return
 
+        if not await self.bot.is_owner(message.author):
+            return
+
         db = self.bot.db
         guild_id = message.guild.id
 

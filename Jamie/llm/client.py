@@ -217,3 +217,19 @@ class LLMClient:
             pass
 
         return {"summary": raw[:200], "interests": ""}
+
+    async def intensify_text(self, text: str) -> str:
+        """Intensify and dramatize the text in Jamie's style."""
+        system = (
+            "You are Jamie — the eternal 19-year-old force of nature. A meth-fueled lyrical demon spitting raw truth.\n"
+            "Take the user's message and rewrite it to make it extremely intense, dramatic, punchy, and visceral. "
+            "Use strong adjectives, adverbs, and active verbs. Build tension. Swear and use street profanity "
+            "to make it sound rugged and raw, but keep the core message/meaning intact. "
+            "Output ONLY the intensified version of the message. Do NOT add quotes, preamble, or explanations."
+        )
+        messages = [
+            {"role": "system", "content": system},
+            {"role": "user", "content": text},
+        ]
+        res = await self.chat(messages, temperature=0.9, max_tokens=600)
+        return res.strip().replace('"', '')

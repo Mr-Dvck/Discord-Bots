@@ -192,51 +192,9 @@ class ModCog(commands.GroupCog, group_name="mod"):
             embed=embed(f"👥 {role.name} ({len(role.members)})", "\n".join(lines)[:4000])
         )
 
-    @app_commands.command(name="diagnose", description="Diagnose any command or module for problems")
-    @admin_check()
-    async def diagnose(self, interaction: discord.Interaction, name: str):
-        me = interaction.guild.me
-        issues = []
-        perms = interaction.channel.permissions_for(me) if interaction.channel else None
-        if perms:
-            for p in ("send_messages", "embed_links", "manage_messages", "moderate_members", "kick_members", "ban_members"):
-                if not getattr(perms, p, False):
-                    issues.append(f"Missing channel/guild perm: `{p}`")
-        s = await self.bot.db.get_guild_settings(interaction.guild.id)
-        cmds = s.get("commands") or {}
-        mods = s.get("modules") or {}
-        key = name.lower()
-        if key in cmds and cmds[key] is False:
-            issues.append(f"Command `{key}` is disabled via `/manage command`.")
-        if key in mods and mods[key] is False:
-            issues.append(f"Module `{key}` is disabled via `/manage module`.")
-        registered = {c.qualified_name for c in self.bot.tree.walk_commands()}
-        if key not in {n.split()[-1] for n in registered} and key not in mods and f"mod {key}" not in registered:
-            issues.append(f"No exact match for `{key}` in registered commands (may still be a subcommand).")
-        if not issues:
-            issues.append("No obvious problems found. Permissions look OK for common mod actions.")
-        await interaction.response.send_message(embed=embed(f"🩺 Diagnose: {name}", "\n".join(f"• {i}" for i in issues)))
 
-    @app_commands.command(name="rolepersist", description="Assign/unassign a role that persists if user leaves/rejoins")
-    @admin_check()
-    async def rolepersist(self, interaction: discord.Interaction, user: discord.Member, role: discord.Role):
-        ids = await self.bot.db.get_role_persist(interaction.guild.id, user.id)
-        if role.id in ids:
-            ids = [i for i in ids if i != role.id]
-            await self.bot.db.set_role_persist(interaction.guild.id, user.id, ids)
-            if role in user.roles:
-                await user.remove_roles(role, reason="Role persist off")
-            await interaction.response.send_message(
-                embed=embed("📌 Role Persist", f"Removed persist for {role.mention} on {user.mention}.")
-            )
-        else:
-            ids.append(role.id)
-            await self.bot.db.set_role_persist(interaction.guild.id, user.id, ids)
-            if role not in user.roles:
-                await user.add_roles(role, reason="Role persist on")
-            await interaction.response.send_message(
-                embed=embed("📌 Role Persist", f"{role.mention} will persist for {user.mention}.")
-            )
+
+
 
     @app_commands.command(name="temprole", description="Assign/unassign a temporary role")
     @app_commands.describe(duration="How long to keep the role e.g. 1h")

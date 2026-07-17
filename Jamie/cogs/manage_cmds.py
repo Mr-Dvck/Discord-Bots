@@ -184,8 +184,8 @@ class ManageCog(commands.GroupCog, group_name="manage"):
             ephemeral=True,
         )
 
-    @app_commands.command(name="announce", description="Send an announcement using the bot")
-    @app_commands.describe(channel="Target channel", message="Announcement text")
+    @app_commands.command(name="announce", description="Send an intensified, dramatic announcement using Jamie")
+    @app_commands.describe(channel="Target channel", message="Announcement text to intensify")
     @admin_check()
     async def announce(
         self,
@@ -193,10 +193,14 @@ class ManageCog(commands.GroupCog, group_name="manage"):
         channel: discord.TextChannel,
         message: str,
     ):
-        e = embed("📢 Announcement", message)
-        e.set_footer(text=f"From {interaction.user}")
-        await channel.send(embed=e)
-        await interaction.response.send_message(f"Sent to {channel.mention}.", ephemeral=True)
+        await interaction.response.defer(ephemeral=True)
+        try:
+            intensified = await self.bot.llm.intensify_text(message)
+            await channel.send(content=intensified)
+            await interaction.followup.send(f"Sent to {channel.mention}.", ephemeral=True)
+        except Exception as e:
+            log.exception("Announce failed")
+            await interaction.followup.send(f"Failed to generate announcement: {e}", ephemeral=True)
 
     # ── modules / commands / prefix ───────────────────────────────
 
