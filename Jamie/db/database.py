@@ -95,6 +95,18 @@ class JamieDatabase(ModerationMixin):
                 dm_on_join     INTEGER DEFAULT 0,
                 background_path TEXT DEFAULT ''
             );
+
+            CREATE TABLE IF NOT EXISTS starboard_config (
+                guild_id       INTEGER PRIMARY KEY,
+                enabled        INTEGER DEFAULT 0,
+                channel_id     INTEGER,
+                min_stars      INTEGER DEFAULT 3
+            );
+
+            CREATE TABLE IF NOT EXISTS starboard_messages (
+                orig_message_id      INTEGER PRIMARY KEY,
+                starboard_message_id INTEGER NOT NULL
+            );
         """)
         await self._conn.commit()
 
@@ -378,3 +390,64 @@ class JamieDatabase(ModerationMixin):
         )
         await self._conn.commit()
         return await self.get_welcome_config(guild_id)
+
+    # ── starboard ─────────────────────────────────────────────────
+
+    _STARBOARD_DEFAULTS = {
+        "enabled": 0,
+        "channel_id": None,
+        "min_stars": 3,
+    }
+
+    async def get_starboard_config(self, guild_id: int) -> dict:
+        cur = await self._conn.execute(
+            "SELECT * FROM starboard_config WHERE guild_id = ?", (guild_id,)
+        )
+        row = await cur.fetchone()
+        if row:
+            return dict(row)
+        return {"guild_id": guild_id, **self._STARBOARD_DEFAULTS}
+
+    async def upsert_starboard_config(self, guild_id: int, **kwargs):
+        current = await self.get_starboard_config(guild_id)
+        merged = {**self._STARBOARD_DEFAULTS, **current, **kwargs, "guild_id": guild_id}
+        await self._conn.execute(
+            """
+            INSERT INTO starboard_config (guild_id, enabled, channel_id, min_stars)
+            VALUES (?, ?, ?, ?)
+            ON CONFLICT(guild_id) DO UPDATE SET
+                enabled    = excluded.enabled,
+                channel_id = excluded.channel_id,
+                min_stars  = excluded.min_stars
+            """,
+            (
+                guild_id,
+                int(merged.get("enabled") or 0),
+                merged.get("channel_id"),
+                int(merged.get("min_stars") or 3),
+            ),
+        )
+        await self._conn.commit()
+        return await self.get_starboard_config(guild_id)
+
+    async def get_starboard_message(self, orig_message_id: int) -> int | None:
+        cur = await self._conn.execute(
+            "SELECT starboard_message_id FROM starboard_messages WHERE orig_message_id = ?",
+            (orig_message_id,),
+        )
+        row = await cur.fetchone()
+        return row["starboard_message_id"] if row else None
+
+    async def save_starboard_message(self, orig_message_id: int, starboard_message_id: int):
+        await self._conn.execute(
+            "INSERT OR REPLACE INTO starboard_messages (orig_message_id, starboard_message_id) VALUES (?, ?)",
+            (orig_message_id, starboard_message_id),
+        )
+        await self._conn.commit()
+
+    async def delete_starboard_message(self, orig_message_id: int):
+        await self._conn.execute(
+            "DELETE FROM starboard_messages WHERE orig_message_id = ?",
+            (orig_message_id,),
+        )
+        await self._conn.commit()

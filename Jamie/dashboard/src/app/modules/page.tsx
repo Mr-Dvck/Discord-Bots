@@ -110,6 +110,16 @@ const DEFAULT_MODULES: ModuleConfig[] = [
     settings: {},
   },
   {
+    id: "starboard",
+    name: "Starboard",
+    description:
+      "Auto join starboard. Reposts highly starred messages (⭐) to a dedicated channel.",
+    icon: "⭐",
+    enabled: false,
+    category: "Engagement",
+    settings: {},
+  },
+  {
     id: "economy",
     name: "Economy",
     description: "/economy daily work pay — coin rewards",
@@ -157,12 +167,23 @@ const DEFAULT_WELCOME: WelcomeSettings = {
   background_path: "",
 };
 
+interface StarboardSettings {
+  channel_id: string;
+  min_stars: number;
+}
+
+const DEFAULT_STARBOARD: StarboardSettings = {
+  channel_id: "",
+  min_stars: 3,
+};
+
 export default function ModulesPage() {
   const [guilds, setGuilds] = useState<Guild[]>([]);
   const [selectedGuild, setSelectedGuild] = useState("");
   const [channels, setChannels] = useState<Channel[]>([]);
   const [modules, setModules] = useState<ModuleConfig[]>(DEFAULT_MODULES);
   const [welcome, setWelcome] = useState<WelcomeSettings>(DEFAULT_WELCOME);
+  const [starboard, setStarboard] = useState<StarboardSettings>(DEFAULT_STARBOARD);
   const [activeCategory, setActiveCategory] = useState("All");
   const [editingModule, setEditingModule] = useState<string | null>("welcome");
   const [saving, setSaving] = useState(false);
@@ -186,12 +207,14 @@ export default function ModulesPage() {
     if (!guildId) return;
     setStatusMsg("");
     try {
-      const [wRes, gRes] = await Promise.all([
+      const [wRes, gRes, sRes] = await Promise.all([
         fetch(`/api/welcome?guildId=${encodeURIComponent(guildId)}`),
         fetch(`/api/guilds/${guildId}`),
+        fetch(`/api/starboard?guildId=${encodeURIComponent(guildId)}`),
       ]);
       const wData = await wRes.json();
       const gData = await gRes.json();
+      const sData = await sRes.json();
 
       if (Array.isArray(gData.channels)) {
         setChannels(
@@ -216,6 +239,19 @@ export default function ModulesPage() {
           )
         );
       }
+
+      if (sData.config) {
+        const c = sData.config;
+        setStarboard({
+          channel_id: c.channel_id || "",
+          min_stars: Number(c.min_stars) || 3,
+        });
+        setModules((prev) =>
+          prev.map((m) =>
+            m.id === "starboard" ? { ...m, enabled: Boolean(c.enabled) } : m
+          )
+        );
+      }
     } catch (e: unknown) {
       setStatusMsg(e instanceof Error ? e.message : String(e));
     }
@@ -229,6 +265,44 @@ export default function ModulesPage() {
     setModules((prev) =>
       prev.map((m) => (m.id === id ? { ...m, enabled: !m.enabled } : m))
     );
+  }
+
+  async function saveStarboard() {
+    if (!selectedGuild) {
+      setStatusMsg("Select a server first.");
+      return;
+    }
+    const starboardMod = modules.find((m) => m.id === "starboard");
+    if (starboardMod?.enabled && !starboard.channel_id) {
+      setStatusMsg("Pick a starboard channel before enabling.");
+      return;
+    }
+
+    setSaving(true);
+    setStatusMsg("");
+    try {
+      const res = await fetch("/api/starboard", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          guildId: selectedGuild,
+          enabled: Boolean(starboardMod?.enabled),
+          channel_id: starboard.channel_id || null,
+          min_stars: Number(starboard.min_stars) || 3,
+        }),
+      });
+      const data = await res.json();
+      if (!res.ok || data.error) throw new Error(data.error || "Save failed");
+      setStatusMsg(
+        starboardMod?.enabled
+          ? "Starboard module saved. Starred posts will be logged."
+          : "Starboard module saved (disabled)."
+      );
+    } catch (e: unknown) {
+      setStatusMsg(e instanceof Error ? e.message : String(e));
+    } finally {
+      setSaving(false);
+    }
   }
 
   async function saveWelcome() {
@@ -517,6 +591,90 @@ export default function ModulesPage() {
                           : welcomeEnabled
                             ? "Save & enable Welcome"
                             : "Save Welcome settings"}
+                      </button>
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {mod.id === "starboard" && (
+                <div>
+                  <button
+                    type="button"
+                    onClick={() =>
+                      setEditingModule(
+                        editingModule === "starboard" ? null : "starboard"
+                      )
+                    }
+                    className="btn btn-ghost"
+                    style={{ fontSize: "0.75rem", padding: "4px 8px" }}
+                  >
+                    {editingModule === "starboard" ? "▾ Settings" : "▸ Settings"}
+                  </button>
+
+                  {editingModule === "starboard" && (
+                    <div
+                      className="mt-3 p-3 rounded-lg space-y-3 animate-fade"
+                      style={{
+                        background: "var(--surface)",
+                        border: "1px solid var(--line)",
+                      }}
+                    >
+                      {!selectedGuild && (
+                        <p className="text-xs" style={{ color: "var(--danger)" }}>
+                          Select a server above to load/save starboard settings.
+                        </p>
+                      )}
+
+                      <label className="block text-xs" style={{ color: "var(--faint)" }}>
+                        Starboard channel
+                        <select
+                          className="select mt-1 w-full"
+                          value={starboard.channel_id}
+                          onChange={(e) =>
+                            setStarboard((w) => ({
+                              ...w,
+                              channel_id: e.target.value,
+                            }))
+                          }
+                          disabled={!selectedGuild}
+                        >
+                          <option value="">Select channel…</option>
+                          {channels.map((c) => (
+                            <option key={c.id} value={c.id}>
+                              #{c.name}
+                            </option>
+                          ))}
+                        </select>
+                      </label>
+
+                      <label className="block text-xs" style={{ color: "var(--faint)" }}>
+                        Minimum stars required
+                        <input
+                          type="number"
+                          min="1"
+                          max="20"
+                          className="input mt-1 w-full"
+                          value={starboard.min_stars}
+                          onChange={(e) =>
+                            setStarboard((w) => ({ ...w, min_stars: Number(e.target.value) || 3 }))
+                          }
+                          disabled={!selectedGuild}
+                        />
+                      </label>
+
+                      <button
+                        type="button"
+                        className="btn btn-accent w-full"
+                        disabled={saving || !selectedGuild}
+                        onClick={saveStarboard}
+                        style={{ justifyContent: "center" }}
+                      >
+                        {saving
+                          ? "Saving…"
+                          : modules.find((m) => m.id === "starboard")?.enabled
+                            ? "Save & enable Starboard"
+                            : "Save Starboard settings"}
                       </button>
                     </div>
                   )}

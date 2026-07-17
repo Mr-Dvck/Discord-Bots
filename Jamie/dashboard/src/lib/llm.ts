@@ -47,6 +47,8 @@ Special helpers:
 - setup_counting_game: [jamie:counting] topic; live bot enforces the game.
 - generate_image: Pollinations flux + LLM enhance. Omit channel_id unless user named a real channel (use list_channels for the snowflake). Never pass null/"null". For join banners: art-only background, no names — Welcome module stamps names on join.
 - generate_blueprint + build_server: full layouts.
+- get_welcome_config / set_welcome_config: get or update welcome message settings.
+- get_starboard_config / set_starboard_config: get or update starboard reactions settings.
 
 **SERVER NAMING (YOU AND THE DISCORD BOT BOTH KNOW THIS):**
 - Category (section) and channel names use **Modern Bold Unicode** (Mathematical Sans-Serif Bold).

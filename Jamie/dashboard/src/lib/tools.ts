@@ -34,6 +34,12 @@ import {
   buildServer,
   type ServerBlueprint,
 } from "@/lib/discord";
+import {
+  getWelcomeConfig,
+  setWelcomeConfig,
+  getStarboardConfig,
+  setStarboardConfig,
+} from "@/lib/jamie-db";
 
 /** Local blueprint generator to avoid circular import with llm.ts */
 async function generateServerBlueprint(description: string): Promise<string> {
@@ -118,7 +124,11 @@ export type ToolName =
   | "generate_image"
   | "generate_blueprint"
   | "build_server"
-  | "discord_request";
+  | "discord_request"
+  | "get_welcome_config"
+  | "set_welcome_config"
+  | "get_starboard_config"
+  | "set_starboard_config";
 
 export interface ToolCall {
   id: string;
@@ -526,6 +536,41 @@ export const DASHBOARD_TOOLS = [
       body: { type: "object", description: "JSON body for POST/PATCH/PUT" },
     },
     ["method", "path"]
+  ),
+  tool(
+    "get_welcome_config",
+    "Get the welcome module configuration (enabled state, channel, message, dm_on_join) for a server.",
+    { guild_id: { type: "string" } },
+    ["guild_id"]
+  ),
+  tool(
+    "set_welcome_config",
+    "Set/update the welcome module configuration for a server.",
+    {
+      guild_id: { type: "string" },
+      enabled: { type: "boolean" },
+      channel_id: { type: "string", description: "Channel snowflake ID to post welcome messages, or null to clear" },
+      message: { type: "string", description: "Welcome message template, supports {user}, {server}, {membercount}" },
+      dm_on_join: { type: "boolean", description: "Whether to also DM the welcome message on join" },
+    },
+    ["guild_id"]
+  ),
+  tool(
+    "get_starboard_config",
+    "Get the starboard module configuration (enabled state, channel, min_stars) for a server.",
+    { guild_id: { type: "string" } },
+    ["guild_id"]
+  ),
+  tool(
+    "set_starboard_config",
+    "Set/update the starboard module configuration for a server.",
+    {
+      guild_id: { type: "string" },
+      enabled: { type: "boolean" },
+      channel_id: { type: "string", description: "Channel snowflake ID to post starboard embed logs, or null to clear" },
+      min_stars: { type: "number", description: "Minimum star (⭐) reactions required to post, default 3" },
+    },
+    ["guild_id"]
   ),
 ];
 
@@ -1283,6 +1328,43 @@ export async function executeTool(
         const body = args.body && typeof args.body === "object" ? args.body : undefined;
         const result = await discordRequest(method, path, body);
         return { ok: true, result: slimResult(result) };
+      }
+
+      case "get_welcome_config": {
+        const guildId = str(args.guild_id);
+        if (!guildId) return { ok: false, error: "guild_id required" };
+        const config = getWelcomeConfig(guildId);
+        return { ok: true, result: config };
+      }
+
+      case "set_welcome_config": {
+        const guildId = str(args.guild_id);
+        if (!guildId) return { ok: false, error: "guild_id required" };
+        const patch: any = {};
+        if (typeof args.enabled === "boolean") patch.enabled = args.enabled;
+        if (args.channel_id !== undefined) patch.channel_id = args.channel_id;
+        if (typeof args.message === "string") patch.message = args.message;
+        if (typeof args.dm_on_join === "boolean") patch.dm_on_join = args.dm_on_join;
+        const config = setWelcomeConfig(guildId, patch);
+        return { ok: true, result: config };
+      }
+
+      case "get_starboard_config": {
+        const guildId = str(args.guild_id);
+        if (!guildId) return { ok: false, error: "guild_id required" };
+        const config = getStarboardConfig(guildId);
+        return { ok: true, result: config };
+      }
+
+      case "set_starboard_config": {
+        const guildId = str(args.guild_id);
+        if (!guildId) return { ok: false, error: "guild_id required" };
+        const patch: any = {};
+        if (typeof args.enabled === "boolean") patch.enabled = args.enabled;
+        if (args.channel_id !== undefined) patch.channel_id = args.channel_id;
+        if (typeof args.min_stars === "number") patch.min_stars = args.min_stars;
+        const config = setStarboardConfig(guildId, patch);
+        return { ok: true, result: config };
       }
 
       default:

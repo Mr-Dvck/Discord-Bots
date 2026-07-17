@@ -213,6 +213,99 @@ export function welcomeBgDir(): string {
   return path.join(path.dirname(resolveDbPath()), "welcome_bgs");
 }
 
+export type StarboardConfig = {
+  guild_id: string;
+  enabled: boolean;
+  channel_id: string | null;
+  min_stars: number;
+};
+
+const STARBOARD_DEFAULTS = {
+  enabled: false,
+  channel_id: null as string | null,
+  min_stars: 3,
+};
+
+function mapStarboard(row: Record<string, unknown> | undefined, guildId: string): StarboardConfig {
+  if (!row) {
+    return { guild_id: String(guildId), ...STARBOARD_DEFAULTS };
+  }
+  return {
+    guild_id: String(row.guild_id ?? guildId),
+    enabled: Boolean(Number(row.enabled ?? 0)),
+    channel_id: row.channel_id != null && row.channel_id !== "" ? String(row.channel_id) : null,
+    min_stars: row.min_stars != null ? Number(row.min_stars) : STARBOARD_DEFAULTS.min_stars,
+  };
+}
+
+export function getStarboardConfig(guildId: string): StarboardConfig {
+  const { db } = openDb();
+  try {
+    db.exec(`
+      CREATE TABLE IF NOT EXISTS starboard_config (
+        guild_id   INTEGER PRIMARY KEY,
+        enabled    INTEGER DEFAULT 0,
+        channel_id INTEGER,
+        min_stars  INTEGER DEFAULT 3
+      );
+    `);
+    const row = db
+      .prepare(
+        `SELECT CAST(guild_id AS TEXT) as guild_id,
+                enabled,
+                CAST(channel_id AS TEXT) as channel_id,
+                min_stars
+         FROM starboard_config WHERE CAST(guild_id AS TEXT) = ?`
+      )
+      .get(String(guildId));
+    return mapStarboard(row, guildId);
+  } finally {
+    db.close();
+  }
+}
+
+export function setStarboardConfig(
+  guildId: string,
+  patch: Partial<Omit<StarboardConfig, "guild_id">>
+): StarboardConfig {
+  const { db } = openDb();
+  try {
+    db.exec(`
+      CREATE TABLE IF NOT EXISTS starboard_config (
+        guild_id   INTEGER PRIMARY KEY,
+        enabled    INTEGER DEFAULT 0,
+        channel_id INTEGER,
+        min_stars  INTEGER DEFAULT 3
+      );
+    `);
+    const current = getStarboardConfig(guildId);
+    const next: StarboardConfig = {
+      guild_id: String(guildId),
+      enabled: patch.enabled ?? current.enabled,
+      channel_id: patch.channel_id !== undefined ? patch.channel_id : current.channel_id,
+      min_stars: patch.min_stars ?? current.min_stars,
+    };
+
+    db.prepare(
+      `INSERT INTO starboard_config (guild_id, enabled, channel_id, min_stars)
+       VALUES (?, ?, ?, ?)
+       ON CONFLICT(guild_id) DO UPDATE SET
+         enabled = excluded.enabled,
+         channel_id = excluded.channel_id,
+         min_stars = excluded.min_stars`
+    ).run(
+      String(guildId),
+      next.enabled ? 1 : 0,
+      next.channel_id ? String(next.channel_id) : null,
+      next.min_stars
+    );
+
+    return next;
+  } finally {
+    db.close();
+  }
+}
+
 function mapProfile(row: Record<string, unknown>): UserProfileRow {
   return {
     user_id: String(row.user_id ?? ""),
