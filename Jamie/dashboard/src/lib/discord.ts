@@ -2,6 +2,8 @@
  * Discord API client — server-side only (uses bot token)
  */
 
+import { channelDisplayName } from "@/lib/unicode";
+
 const DISCORD_API = "https://discord.com/api/v10";
 
 async function discordFetch(path: string, method: string = "GET", body?: unknown) {
@@ -68,7 +70,12 @@ export async function createChannel(guildId: string, data: {
   nsfw?: boolean;
   position?: number;
 }) {
-  return discordFetch(`/guilds/${guildId}/channels`, "POST", data);
+  const isCategory = data.type === 4;
+  const payload = {
+    ...data,
+    name: channelDisplayName(data.name, { category: isCategory }),
+  };
+  return discordFetch(`/guilds/${guildId}/channels`, "POST", payload);
 }
 
 export async function modifyChannel(channelId: string, data: {
@@ -76,8 +83,13 @@ export async function modifyChannel(channelId: string, data: {
   topic?: string;
   position?: number;
   parent_id?: string | null;
+  nsfw?: boolean;
 }) {
-  return discordFetch(`/channels/${channelId}`, "PATCH", data);
+  const payload = { ...data };
+  if (payload.name !== undefined) {
+    payload.name = channelDisplayName(payload.name);
+  }
+  return discordFetch(`/channels/${channelId}`, "PATCH", payload);
 }
 
 export async function deleteChannel(channelId: string) {
@@ -193,9 +205,22 @@ export async function sendMessage(
   content: string,
   embeds?: unknown[]
 ) {
+  // Default: wrap plain text as a Jamie-styled embed when no embeds provided
+  let finalEmbeds = embeds;
+  let finalContent = content || undefined;
+  if ((!embeds || embeds.length === 0) && content && content.trim()) {
+    finalEmbeds = [
+      {
+        title: "🔥 Jamie",
+        description: content.slice(0, 4096),
+        color: 0x39b7c4,
+      },
+    ];
+    finalContent = undefined;
+  }
   return discordFetch(`/channels/${channelId}/messages`, "POST", {
-    content: content || undefined,
-    embeds: embeds?.length ? embeds : undefined,
+    content: finalContent,
+    embeds: finalEmbeds?.length ? finalEmbeds : undefined,
   });
 }
 
@@ -262,7 +287,7 @@ export async function discordRequest(
 
 export async function createCategory(guildId: string, name: string) {
   return discordFetch(`/guilds/${guildId}/channels`, "POST", {
-    name,
+    name: channelDisplayName(name, { category: true }),
     type: 4, // category
   });
 }

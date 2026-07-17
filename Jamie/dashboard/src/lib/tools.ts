@@ -963,27 +963,27 @@ export async function executeTool(
       case "send_message": {
         const channelId = str(args.channel_id);
         let content = str(args.content);
-        const embedTitle = str(args.embed_title);
-        const embedDesc = str(args.embed_description);
+        const embedTitle = str(args.embed_title) || "🔥 Jamie";
+        const embedDesc = str(args.embed_description) || content;
         if (!channelId) return { ok: false, error: "channel_id required" };
-        if (!content && !embedTitle && !embedDesc) {
+        if (!embedDesc && !content) {
           return { ok: false, error: "content or embed required" };
         }
-        if (content.length > 2000) content = content.slice(0, 1997) + "...";
-        const embeds =
-          embedTitle || embedDesc
-            ? [
-                {
-                  title: embedTitle || undefined,
-                  description: embedDesc || undefined,
-                  color: 0x39b7c4,
-                },
-              ]
-            : undefined;
-        const msg = await sendMessage(channelId, content, embeds);
+        if (embedDesc.length > 4096) {
+          // sendMessage wraps content as embed; pass description chunks via first embed only
+        }
+        const embeds = [
+          {
+            title: embedTitle,
+            description: (embedDesc || content).slice(0, 4096),
+            color: 0x39b7c4,
+          },
+        ];
+        // content empty → pure embed message
+        const msg = await sendMessage(channelId, "", embeds);
         return {
           ok: true,
-          result: { id: msg?.id, channel_id: channelId },
+          result: { id: msg?.id, channel_id: channelId, embedded: true },
         };
       }
 
@@ -1099,6 +1099,7 @@ export async function executeTool(
             topic: updated?.topic ?? topic,
           };
         } else {
+          // Plain ascii slug first; createChannel applies bold unicode
           const channelName =
             str(args.channel_name, "counting")
               .toLowerCase()

@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import Sidebar from "@/components/Sidebar";
 import JamieChat from "@/components/JamieChat";
+import { applyWelcomeOverlay } from "@/lib/welcome-overlay";
 
 type ImageSize = "square" | "welcome" | "banner" | "portrait" | "story";
 
@@ -14,12 +15,24 @@ const SIZES: { id: ImageSize; label: string; hint: string }[] = [
   { id: "story", label: "Story", hint: "768×1344 — tall" },
 ];
 
-const PRESETS: { label: string; prompt: string; size: ImageSize }[] = [
+const WELCOME_BG_PROMPT =
+  "Dark cyberpunk Discord welcome banner background for a server called Certified, " +
+  "neon cyan and lime accents, gritty metal and night energy, cinematic wide composition, " +
+  "empty lower third for text overlay, high detail, NO text, NO letters, NO watermarks";
+
+const PRESETS: { label: string; prompt: string; size: ImageSize; welcome?: boolean }[] = [
+  {
+    label: "Certified welcome",
+    size: "welcome",
+    welcome: true,
+    prompt: WELCOME_BG_PROMPT,
+  },
   {
     label: "Welcome banner",
     size: "welcome",
+    welcome: true,
     prompt:
-      "Dark cyberpunk Discord welcome banner, neon cyan and lime, text space on the left, abstract metal geometry, high detail, no words",
+      "Dark cyberpunk Discord welcome banner, neon cyan and lime, empty lower area for text, abstract metal geometry, high detail, no words no letters",
   },
   {
     label: "Certified vibe",
@@ -63,6 +76,9 @@ export default function ImagesPage() {
   const [prompt, setPrompt] = useState(PRESETS[0].prompt);
   const [size, setSize] = useState<ImageSize>("welcome");
   const [enhance, setEnhance] = useState(true);
+  const [welcomeMode, setWelcomeMode] = useState(true);
+  const [memberName, setMemberName] = useState("");
+  const [welcomeSuffix, setWelcomeSuffix] = useState("is now Certified");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [result, setResult] = useState<{
@@ -71,6 +87,7 @@ export default function ImagesPage() {
     prompt: string;
     width: number;
     height: number;
+    overlayLine?: string;
   } | null>(null);
 
   const [guilds, setGuilds] = useState<Guild[]>([]);
@@ -106,24 +123,54 @@ export default function ImagesPage() {
 
   async function generate() {
     if (!prompt.trim() || loading) return;
+    if (welcomeMode && !memberName.trim()) {
+      setError('Enter a member name for the welcome line (e.g. "Duck").');
+      return;
+    }
     setLoading(true);
     setError("");
     setResult(null);
     setPostMsg("");
     try {
+      // Background only — no baked-in letters (we stamp exact text after)
+      const genPrompt = welcomeMode
+        ? `${prompt.trim()}. Absolutely no text, no letters, no watermark, leave lower third clear for overlay.`
+        : prompt.trim();
+
       const res = await fetch("/api/generate-image", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ prompt: prompt.trim(), size, enhance }),
+        body: JSON.stringify({
+          prompt: genPrompt,
+          size: welcomeMode ? "welcome" : size,
+          enhance,
+        }),
       });
       const data = await res.json();
       if (!res.ok || data.error) throw new Error(data.error || "Generation failed");
+
+      let dataUrl = data.dataUrl as string;
+      let overlayLine: string | undefined;
+      if (welcomeMode) {
+        const name = memberName.trim();
+        const suffix = welcomeSuffix.trim() || "is now Certified";
+        overlayLine = `${name} ${suffix}`;
+        dataUrl = await applyWelcomeOverlay({
+          dataUrl,
+          memberName: name,
+          suffix,
+          width: data.width,
+          height: data.height,
+        });
+      }
+
       setResult({
-        dataUrl: data.dataUrl,
+        dataUrl,
         enhancedPrompt: data.enhancedPrompt,
         prompt: data.prompt,
         width: data.width,
         height: data.height,
+        overlayLine,
       });
     } catch (e: unknown) {
       setError(e instanceof Error ? e.message : String(e));
@@ -146,7 +193,7 @@ export default function ImagesPage() {
         body: JSON.stringify({
           channelId,
           dataUrl: result.dataUrl,
-          caption: result.prompt,
+          caption: result.overlayLine || result.prompt,
         }),
       });
       const data = await res.json();
@@ -176,9 +223,8 @@ export default function ImagesPage() {
             🎨 Image Studio
           </h1>
           <p className="text-sm" style={{ color: "var(--muted)" }}>
-            Same stack as Discord{" "}
-            <code style={{ color: "var(--primary)" }}>/generate</code> — type words,
-            get an image (Pollinations flux + optional LLM enhance)
+            Pollinations flux + optional LLM enhance. Welcome mode stamps exact
+            text: <strong style={{ color: "var(--primary)" }}>[Name] is now Certified</strong>
           </p>
         </div>
 
@@ -214,12 +260,54 @@ export default function ImagesPage() {
                     onClick={() => {
                       setPrompt(p.prompt);
                       setSize(p.size);
+                      if (p.welcome) setWelcomeMode(true);
                     }}
                   >
                     {p.label}
                   </button>
                 ))}
               </div>
+            </div>
+
+            <div className="card-sm space-y-3">
+              <label
+                className="flex items-center gap-2 text-sm cursor-pointer"
+                style={{ color: "var(--text)" }}
+              >
+                <input
+                  type="checkbox"
+                  checked={welcomeMode}
+                  onChange={(e) => {
+                    setWelcomeMode(e.target.checked);
+                    if (e.target.checked) setSize("welcome");
+                  }}
+                />
+                Welcome banner text overlay
+              </label>
+              {welcomeMode && (
+                <div className="space-y-2">
+                  <input
+                    className="input"
+                    placeholder="Member name (e.g. Duck)"
+                    value={memberName}
+                    onChange={(e) => setMemberName(e.target.value)}
+                  />
+                  <input
+                    className="input"
+                    placeholder="is now Certified"
+                    value={welcomeSuffix}
+                    onChange={(e) => setWelcomeSuffix(e.target.value)}
+                  />
+                  <p className="text-xs" style={{ color: "var(--faint)" }}>
+                    Preview line:{" "}
+                    <span style={{ color: "var(--primary)" }}>
+                      {(memberName.trim() || "Member") +
+                        " " +
+                        (welcomeSuffix.trim() || "is now Certified")}
+                    </span>
+                  </p>
+                </div>
+              )}
             </div>
 
             <div className="card-sm space-y-3">
@@ -402,6 +490,12 @@ export default function ImagesPage() {
                     <div>
                       <strong style={{ color: "var(--premium)" }}>Enhanced:</strong>{" "}
                       {result.enhancedPrompt}
+                    </div>
+                  )}
+                  {result.overlayLine && (
+                    <div>
+                      <strong style={{ color: "var(--accent)" }}>Overlay:</strong>{" "}
+                      {result.overlayLine}
                     </div>
                   )}
                   <div style={{ color: "var(--faint)" }}>

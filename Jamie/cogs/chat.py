@@ -3,12 +3,15 @@ ChatCog — Handles Jamie's conversations.
 - Dedicated channel: Jamie responds to every message
 - @mention: Jamie responds when pinged in other channels
 - LLM-powered responses with user context and conversation memory
+- All talk output is sent as Discord embeds
 """
 
 import discord
 from discord.ext import commands
 import logging
 from datetime import datetime, timezone
+
+from cogs.format_utils import send_jamie_embeds
 
 log = logging.getLogger("jamie.chat")
 
@@ -51,16 +54,14 @@ class ChatCog(commands.Cog):
     # ── dedicated channel response ────────────────────────────────
 
     async def _respond_in_channel(self, message: discord.Message):
-        """Respond to a message in Jamie's dedicated channel."""
+        """Respond to a message in Jamie's dedicated channel (embed)."""
         async with message.channel.typing():
             db = self.bot.db
             llm = self.bot.llm
 
-            # Build context
             user_context = await db.build_user_context(message.author.id, message.guild.id)
             conversation_context = await db.build_conversation_context(message.channel.id, limit=20)
 
-            # Generate response
             response = await llm.generate_response(
                 user_message=message.content,
                 user_context=user_context,
@@ -68,37 +69,22 @@ class ChatCog(commands.Cog):
                 is_mention=False,
             )
 
-            # Clean up the response (remove any unwanted prefixes)
             response = response.strip()
-
-            # Split if too long for Discord (2000 char limit)
-            if len(response) > 2000:
-                # Split at paragraph breaks
-                chunks = []
-                while len(response) > 2000:
-                    split_at = response[:2000].rfind("\n\n")
-                    if split_at < 500:
-                        split_at = response[:2000].rfind("\n")
-                    if split_at < 500:
-                        split_at = 1997
-                    chunks.append(response[:split_at + 1])
-                    response = response[split_at + 1:]
-                chunks.append(response)
-
-                for chunk in chunks:
-                    await message.channel.send(chunk)
-            else:
-                await message.channel.send(response)
+            await send_jamie_embeds(
+                message.channel,
+                response,
+                title="🔥 Jamie",
+                footer=f"to {message.author.display_name}",
+            )
 
     # ── @mention response ──────────────────────────────────────────
 
     async def _respond_to_mention(self, message: discord.Message):
-        """Respond when @mentioned in a side channel."""
+        """Respond when @mentioned in a side channel (embed)."""
         async with message.channel.typing():
             db = self.bot.db
             llm = self.bot.llm
 
-            # Remove the @mention from the message content
             content = message.content
             for mention in message.mentions:
                 if mention.id == self.bot.user.id:
@@ -108,11 +94,9 @@ class ChatCog(commands.Cog):
             if not content:
                 content = "Hey."
 
-            # Build context
             user_context = await db.build_user_context(message.author.id, message.guild.id)
             conversation_context = await db.build_conversation_context(message.channel.id, limit=10)
 
-            # Generate response
             response = await llm.generate_response(
                 user_message=content,
                 user_context=user_context,
@@ -121,11 +105,13 @@ class ChatCog(commands.Cog):
             )
 
             response = response.strip()
-
-            if len(response) > 2000:
-                response = response[:1997] + "..."
-
-            await message.reply(response)
+            await send_jamie_embeds(
+                message.channel,
+                response,
+                title="🔥 Jamie",
+                reply_to=message,
+                footer=f"reply to {message.author.display_name}",
+            )
 
     # ── /talk command — direct conversation ───────────────────────
 
@@ -160,10 +146,16 @@ class ChatCog(commands.Cog):
         )
 
         response = response.strip()
-        if len(response) > 2000:
-            response = response[:1997] + "..."
+        from cogs.format_utils import jamie_embed, split_for_embed
 
-        await interaction.followup.send(response)
+        chunks = split_for_embed(response, 3900)
+        for i, chunk in enumerate(chunks):
+            emb = jamie_embed(
+                chunk,
+                title="🔥 Jamie" if i == 0 else None,
+                footer=f"talk · {interaction.user.display_name}" if i == len(chunks) - 1 else None,
+            )
+            await interaction.followup.send(embed=emb)
 
     # ── /ask command — ask about someone/something ────────────────
 
@@ -218,10 +210,16 @@ class ChatCog(commands.Cog):
         )
 
         response = response.strip()
-        if len(response) > 2000:
-            response = response[:1997] + "..."
+        from cogs.format_utils import jamie_embed, split_for_embed
 
-        await interaction.followup.send(response)
+        chunks = split_for_embed(response, 3900)
+        for i, chunk in enumerate(chunks):
+            emb = jamie_embed(
+                chunk,
+                title="🔥 Jamie" if i == 0 else None,
+                footer=f"ask · {interaction.user.display_name}" if i == len(chunks) - 1 else None,
+            )
+            await interaction.followup.send(embed=emb)
 
     # ── /rant — long + / - monologue ──────────────────────────────
 
@@ -281,42 +279,17 @@ class ChatCog(commands.Cog):
         if len(text) > 4000:
             text = text[:3997].rstrip() + "..."
 
-        # Discord message limit 2000 — split into up to 2 chunks
-        chunks: list[str] = []
-        remaining = text
-        while remaining:
-            if len(remaining) <= 2000:
-                chunks.append(remaining)
-                break
-            split_at = remaining[:2000].rfind("\n\n")
-            if split_at < 400:
-                split_at = remaining[:2000].rfind("\n")
-            if split_at < 400:
-                split_at = remaining[:2000].rfind(". ")
-                if split_at > 400:
-                    split_at += 1  # include period
-            if split_at < 400:
-                split_at = 1997
-            chunks.append(remaining[: split_at + 1].rstrip())
-            remaining = remaining[split_at + 1 :].lstrip()
+        from cogs.format_utils import jamie_embed, split_for_embed
 
-        header = f"**Rant {'+' if pol == '+' else '−'}** · _{topic}_\n\n"
-        # Attach header only if it fits first chunk
-        first = chunks[0] if chunks else ""
-        if len(header) + len(first) <= 2000:
-            chunks[0] = header + first
-        else:
-            await interaction.followup.send(header.rstrip())
-
+        title = f"🔥 Rant {'+' if pol == '+' else '−'} · {topic}"[:256]
+        chunks = split_for_embed(text, 3900)
         for i, chunk in enumerate(chunks):
-            if not chunk:
-                continue
-            if i == 0 and chunks[0].startswith("**Rant"):
-                await interaction.followup.send(chunk)
-            elif i == 0:
-                await interaction.followup.send(chunk)
-            else:
-                await interaction.followup.send(chunk)
+            emb = jamie_embed(
+                chunk,
+                title=title if i == 0 else None,
+                footer=f"rant · {interaction.user.display_name}" if i == len(chunks) - 1 else f"({i + 1}/{len(chunks)})",
+            )
+            await interaction.followup.send(embed=emb)
 
 
 async def setup(bot: commands.Bot):

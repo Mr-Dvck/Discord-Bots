@@ -39,7 +39,7 @@ export default function JamieChat({
     {
       role: "assistant",
       content:
-        "Yo. I'm Jamie — full admin on this bot. Tell me to build anything: channels, roles, games, perms, messages, kicks, structure… I execute it. Only nukes (delete / ban / bulk wipe / full rebuild) need your Confirm first.",
+        "Yo, Duck. Private line — it's me. Same blood, less of the public circus. Tell me what to build or burn and I'll run the bot for you. Channels and sections go Modern Bold Unicode, capital on the title (𝗠𝗮𝗶𝗻, 𝗧𝗲𝘅𝘁 𝗖𝗵𝗮𝗻𝗻𝗲𝗹𝘀). Nukes still need your Confirm.",
       timestamp: Date.now(),
     },
   ]);
