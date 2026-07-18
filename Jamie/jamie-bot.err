@@ -1052,3 +1052,20 @@ RuntimeError: PyNaCl library needed in order to use voice
 08:44:22 [jamie.memory] INFO: Running personality analysis cycle
 08:44:22 [jamie.memory] INFO: Running memory prune cycle
 08:44:22 [jamie] INFO: Cleared guild command copies for Certified (1139997451835674667)
+08:47:07 [discord.voice_state] INFO: Connecting to voice...
+08:47:07 [discord.voice_state] INFO: Starting voice handshake... (connection attempt 1)
+08:47:07 [discord.voice_state] INFO: Voice handshake complete. Endpoint found: c-atl12-05121a79.discord.media:2083
+08:47:07 [discord.voice_state] INFO: Voice connection complete.
+08:47:07 [jamie.music] ERROR: Failed to join voice channel
+Traceback (most recent call last):
+  File "c:\.A - Projects\Bots\Discord-Bots\Jamie\cogs\music.py", line 69, in join_vc
+    await interaction.followup.send("", ephemeral=True)
+  File "c:\.A - Projects\Bots\Discord-Bots\Jamie\venv\Lib\site-packages\discord\webhook\async_.py", line 1909, in send
+    data = await adapter.execute_webhook(
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    ...<11 lines>...
+    )
+    ^
+  File "c:\.A - Projects\Bots\Discord-Bots\Jamie\venv\Lib\site-packages\discord\webhook\async_.py", line 226, in request
+    raise HTTPException(response, data)
+discord.errors.HTTPException: 400 Bad Request (error code: 50006): Cannot send an empty message

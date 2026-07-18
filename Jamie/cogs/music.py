@@ -60,13 +60,13 @@ class MusicCog(commands.Cog):
             )
             return
 
-        await interaction.response.defer()
+        # Use defer_with_response to avoid "thinking" state
+        await interaction.response.defer(ephemeral=True)
 
         try:
             voice_client = await target_channel.connect()
             self.voice_connections[interaction.guild.id] = voice_client
             # No message sent - Jamie joins silently
-            # Don't send any response to avoid "Cannot send an empty message" error
             
         except Exception as e:
             log.exception("Failed to join voice channel")
