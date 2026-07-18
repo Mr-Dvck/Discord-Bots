@@ -33,17 +33,25 @@ export type MemoryMessage = {
 };
 
 function resolveDbPath(): string {
+  // First check environment variable
+  if (process.env.JAMIE_DB_PATH) {
+    return process.env.JAMIE_DB_PATH;
+  }
+
+  // Try multiple paths relative to the project structure
   const candidates = [
-    process.env.JAMIE_DB_PATH,
-    /*turbopackIgnore: true*/ path.join(process.cwd(), "..", "data", "jamie.db"),
     /*turbopackIgnore: true*/ path.join(process.cwd(), "data", "jamie.db"),
+    /*turbopackIgnore: true*/ path.join(process.cwd(), "..", "data", "jamie.db"),
     /*turbopackIgnore: true*/ path.join(process.cwd(), "..", "..", "data", "jamie.db"),
-  ].filter(Boolean) as string[];
+    /*turbopackIgnore: true*/ path.join(process.cwd(), "..", "..", "..", "data", "jamie.db"),
+  ];
 
   for (const p of candidates) {
     if (/*turbopackIgnore: true*/ fs.existsSync(p)) return p;
   }
-  return candidates[0] || /*turbopackIgnore: true*/ path.join(process.cwd(), "..", "data", "jamie.db");
+
+  // If no database found, return the first candidate (will be created on write)
+  return candidates[0] || /*turbopackIgnore: true*/ path.join(process.cwd(), "data", "jamie.db");
 }
 
 type Stmt = {

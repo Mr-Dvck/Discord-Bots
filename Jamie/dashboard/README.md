@@ -20,6 +20,8 @@ A Dyno-style web dashboard for managing the Jamie Discord bot. Built with Next.j
    - `OPENROUTER_API_KEY` — OpenRouter API key for LLM
    - `JAMIE_LLM_MODEL` — LLM model (e.g. `meta-llama/llama-3.3-70b-instruct`)
    - `JAMIE_LLM_API_BASE` — LLM API base URL (e.g. `https://openrouter.ai/api/v1`)
+   - `JAMIE_DB_PATH` — **Required for welcome/starboard config**. Path to the bot's `data/jamie.db` file.
+     - On Vercel, set this to the absolute path where the database is stored (e.g., `/path/to/jamie/db/data/jamie.db`)
 4. Deploy
 
 ## Local Development
