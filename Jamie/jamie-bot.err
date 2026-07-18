@@ -398,3 +398,263 @@ Traceback (most recent call last):
     system = f"{llm.JAMIE_SYSTEM_PROMPT}\n\n[Active Guild ID: {guild.id}]"
                 ^^^^^^^^^^^^^^^^^^^^^^^
 AttributeError: 'LLMClient' object has no attribute 'JAMIE_SYSTEM_PROMPT'
+07:07:30 [discord.client] WARNING: PyNaCl is not installed, voice will NOT be supported
+07:07:30 [discord.client] WARNING: davey is not installed, voice will NOT be supported
+07:07:30 [discord.client] INFO: logging in using static token
+07:07:31 [jamie] INFO: Database connected
+07:07:31 [jamie] INFO: LLM client started (model: meta-llama/llama-3.3-70b-instruct)
+07:07:31 [jamie] INFO: Image generator started
+07:07:31 [jamie] INFO: Loaded cog: cogs.chat
+07:07:31 [jamie] INFO: Loaded cog: cogs.counting
+07:07:31 [jamie] INFO: Loaded cog: cogs.economy
+07:07:31 [jamie] INFO: Loaded cog: cogs.events_extra
+07:07:31 [jamie] INFO: Loaded cog: cogs.format_utils
+07:07:31 [jamie] INFO: Loaded cog: cogs.image_cog
+07:07:31 [jamie] INFO: Loaded cog: cogs.info_cmds
+07:07:31 [jamie] INFO: Loaded cog: cogs.manage_cmds
+07:07:31 [jamie] INFO: Loaded cog: cogs.memory
+07:07:31 [jamie] INFO: Loaded cog: cogs.misc_cmds
+07:07:31 [jamie] INFO: Loaded cog: cogs.modlog_cmds
+07:07:31 [jamie] INFO: Loaded cog: cogs.mod_cmds
+07:07:31 [jamie] INFO: Loaded cog: cogs.roles_cmds
+07:07:31 [jamie] INFO: Loaded cog: cogs.setup
+07:07:31 [jamie] INFO: Loaded cog: cogs.starboard
+07:07:31 [jamie] INFO: Loaded cog: cogs.utility
+07:07:31 [jamie] INFO: Loaded cog: cogs.welcome
+07:07:31 [jamie] INFO: Synced 19 global slash commands: ask, bot, economy, generate, help, imagine, manage, misc, mod, modlog, profile, ranks, rant, remember, servermap, setchannel, setup, stats, talk
+07:07:32 [discord.gateway] INFO: Shard ID None has connected to Gateway (Session ID: f2fd0558f7b211e059185806bb2bcb73).
+07:07:34 [jamie] INFO: ════════════════════════════════════════
+07:07:34 [jamie] INFO:   JAMIE IS ONLINE
+07:07:34 [jamie] INFO:   Guilds: 1
+07:07:34 [jamie] INFO:   Users:  336
+07:07:34 [jamie] INFO: ════════════════════════════════════════
+07:07:34 [jamie.memory] INFO: Running personality analysis cycle
+07:07:34 [jamie.memory] INFO: Running memory prune cycle
+07:07:34 [jamie] INFO: Cleared guild command copies for Certified (1139997451835674667)
+07:08:55 [jamie.chat] INFO: Agent executing tool: create_channel with args {'name': 'Logs', 'type': 'category', 'parent_id': None}
+07:08:57 [jamie.chat] INFO: Agent executing tool: create_channel with args {'name': 'server-logs', 'type': 'text', 'parent_id': '1527633194709418094'}
+07:08:58 [jamie.chat] INFO: Agent executing tool: create_channel with args {'name': 'member-logs', 'type': 'text', 'parent_id': '1527633194709418094'}
+07:08:59 [jamie.chat] INFO: Agent executing tool: create_channel with args {'name': 'message-logs', 'type': 'text', 'parent_id': '1527633194709418094'}
+07:09:00 [jamie.chat] INFO: Agent executing tool: create_channel with args {'name': 'voice-logs', 'type': 'text', 'parent_id': '1527633194709418094'}
+07:09:01 [jamie.chat] INFO: Agent executing tool: create_channel with args {'name': 'role-logs', 'type': 'text', 'parent_id': '1527633194709418094'}
+07:09:02 [jamie.chat] INFO: Agent executing tool: create_channel with args {'name': 'bot-logs', 'type': 'text', 'parent_id': '1527633194709418094'}
+07:09:03 [jamie.chat] INFO: Agent executing tool: send_message with args {'channel_id': '1527633194709418094', 'content': 'Logs section created with normal log channels'}
+07:09:04 [jamie.chat] INFO: Agent executing tool: send_message with args {'channel_id': '1527491367062999111', 'content': 'Logs section created with normal log channels'}
+07:09:04 [jamie.chat] ERROR: Tool execution failed: send_message
+Traceback (most recent call last):
+  File "C:\.A - Projects\Bots\Discord-Bots\Jamie\cogs\chat.py", line 459, in _execute_bot_tool
+    ch = guild.get_channel(int(channel_id)) or await self.bot.fetch_channel(int(channel_id))
+                                               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\.A - Projects\Bots\Discord-Bots\Jamie\venv\Lib\site-packages\discord\client.py", line 2713, in fetch_channel
+    data = await self.http.get_channel(channel_id)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\.A - Projects\Bots\Discord-Bots\Jamie\venv\Lib\site-packages\discord\http.py", line 774, in request
+    raise NotFound(response, data)
+discord.errors.NotFound: 404 Not Found (error code: 10003): Unknown Channel
+07:09:05 [jamie.chat] INFO: Agent executing tool: send_message with args {'channel_id': '1527633194709418094', 'content': 'Logs section created with normal log channels'}
+07:09:39 [jamie.chat] INFO: Agent executing tool: create_channel with args {'name': 'Text Channels', 'type': 'category', 'parent_id': '1139997451835674667'}
+07:09:40 [jamie.chat] INFO: Agent executing tool: create_channel with args {'name': 'Voice Channels', 'type': 'category', 'parent_id': '1139997451835674667'}
+07:09:41 [jamie.chat] INFO: Agent executing tool: create_channel with args {'name': 'Logs', 'type': 'category', 'parent_id': '1139997451835674667'}
+07:09:42 [jamie.chat] INFO: Agent executing tool: create_channel with args {'name': 'Server Logs', 'type': 'text', 'parent_id': '1527633386837901432'}
+07:09:43 [jamie.chat] INFO: Agent executing tool: create_channel with args {'name': 'Member Logs', 'type': 'text', 'parent_id': '1527633386837901432'}
+07:09:44 [jamie.chat] INFO: Agent executing tool: create_channel with args {'name': 'Message Logs', 'type': 'text', 'parent_id': '1527633386837901432'}
+07:09:46 [jamie.chat] INFO: Agent executing tool: send_message with args {'channel_id': '1527633377698643968', 'content': 'Welcome to our server! Please read the rules in the #\\u1d5c8\\u1d5c1-\\u1d5c2\\u1d5c1\\u1d5c7 channel before participating in discussions.'}
+07:09:47 [jamie.chat] INFO: Agent executing tool: create_channel with args {'name': 'Rules', 'type': 'text', 'parent_id': '1527633377698643968'}
+07:09:48 [jamie.chat] INFO: Agent executing tool: send_message with args {'channel_id': '1527633412389863574', 'content': 'Welcome to our server! Please read the rules in this channel before participating in discussions.'}
+07:09:50 [jamie.chat] INFO: Agent executing tool: send_message with args {'channel_id': '1527633377698643968', 'content': 'Welcome to our server! Please read the rules in the #\\u1d5c8\\u1d5c1-\\u1d5c2\\u1d5c1\\u1d5c7 channel before participating in discussions.'}
+07:11:35 [jamie.chat] INFO: Agent executing tool: create_channel with args {'name': 'notelog', 'type': 'text', 'parent_id': 'Logs'}
+07:11:35 [jamie.chat] ERROR: Tool execution failed: create_channel
+Traceback (most recent call last):
+  File "C:\.A - Projects\Bots\Discord-Bots\Jamie\cogs\chat.py", line 346, in _execute_bot_tool
+    parent = guild.get_channel(int(parent_id)) if parent_id else None
+                               ~~~^^^^^^^^^^^
+ValueError: invalid literal for int() with base 10: 'Logs'
+07:11:36 [jamie.chat] INFO: Agent executing tool: create_channel with args {'name': 'banlog', 'type': 'text', 'parent_id': 'Logs'}
+07:11:36 [jamie.chat] ERROR: Tool execution failed: create_channel
+Traceback (most recent call last):
+  File "C:\.A - Projects\Bots\Discord-Bots\Jamie\cogs\chat.py", line 346, in _execute_bot_tool
+    parent = guild.get_channel(int(parent_id)) if parent_id else None
+                               ~~~^^^^^^^^^^^
+ValueError: invalid literal for int() with base 10: 'Logs'
+07:11:37 [jamie.chat] INFO: Agent executing tool: create_channel with args {'name': 'notelog', 'type': 'text', 'parent_id': '1139997451835674667'}
+07:11:38 [jamie.chat] INFO: Agent executing tool: create_channel with args {'name': 'banlog', 'type': 'text', 'parent_id': '1139997451835674667'}
+07:11:39 [jamie.chat] INFO: Agent executing tool: send_message with args {'channel_id': '1527633871208841267', 'content': 'This is the notelog channel.'}
+07:11:40 [jamie.chat] INFO: Agent executing tool: send_message with args {'channel_id': '1527633875398955122', 'content': 'This is the banlog channel.'}
+07:11:41 [jamie.chat] INFO: Agent executing tool: list_channels with args {}
+07:11:42 [jamie.chat] INFO: Agent executing tool: create_channel with args {'name': 'notelog', 'type': 'text', 'parent_id': '1527633194709418094'}
+07:11:43 [jamie.chat] INFO: Agent executing tool: create_channel with args {'name': 'banlog', 'type': 'text', 'parent_id': '1527633194709418094'}
+07:11:44 [jamie.chat] INFO: Agent executing tool: send_message with args {'channel_id': '1527633894382506015', 'content': 'This is the notelog channel.'}
+07:37:34 [jamie.memory] INFO: Running personality analysis cycle
+07:48:24 [discord.gateway] INFO: Shard ID None has successfully RESUMED session f2fd0558f7b211e059185806bb2bcb73.
+08:07:34 [jamie.memory] INFO: Running personality analysis cycle
+08:07:34 [jamie.memory] INFO: Running memory prune cycle
+08:37:34 [jamie.memory] INFO: Running personality analysis cycle
+09:07:34 [jamie.memory] INFO: Running memory prune cycle
+09:07:34 [jamie.memory] INFO: Running personality analysis cycle
+09:37:34 [jamie.memory] INFO: Running personality analysis cycle
+10:07:34 [jamie.memory] INFO: Running personality analysis cycle
+10:07:34 [jamie.memory] INFO: Running memory prune cycle
+10:37:34 [jamie.memory] INFO: Running personality analysis cycle
+11:07:34 [jamie.memory] INFO: Running personality analysis cycle
+11:07:34 [jamie.memory] INFO: Running memory prune cycle
+11:25:22 [discord.gateway] INFO: Shard ID None has successfully RESUMED session f2fd0558f7b211e059185806bb2bcb73.
+11:37:34 [jamie.memory] INFO: Running personality analysis cycle
+12:07:34 [jamie.memory] INFO: Running personality analysis cycle
+12:07:34 [jamie.memory] INFO: Running memory prune cycle
+12:37:34 [jamie.memory] INFO: Running personality analysis cycle
+13:01:30 [discord.gateway] INFO: Shard ID None has successfully RESUMED session f2fd0558f7b211e059185806bb2bcb73.
+13:07:34 [jamie.memory] INFO: Running memory prune cycle
+13:07:34 [jamie.memory] INFO: Running personality analysis cycle
+13:37:34 [jamie.memory] INFO: Running personality analysis cycle
+13:39:18 [discord.gateway] INFO: Shard ID None has successfully RESUMED session f2fd0558f7b211e059185806bb2bcb73.
+14:07:34 [jamie.memory] INFO: Running memory prune cycle
+14:07:34 [jamie.memory] INFO: Running personality analysis cycle
+14:14:05 [discord.gateway] INFO: Shard ID None has successfully RESUMED session f2fd0558f7b211e059185806bb2bcb73.
+14:37:34 [jamie.memory] INFO: Running personality analysis cycle
+15:07:34 [jamie.memory] INFO: Running personality analysis cycle
+15:07:34 [jamie.memory] INFO: Running memory prune cycle
+15:37:34 [jamie.memory] INFO: Running personality analysis cycle
+16:07:34 [jamie.memory] INFO: Running memory prune cycle
+16:07:34 [jamie.memory] INFO: Running personality analysis cycle
+16:37:34 [jamie.memory] INFO: Running personality analysis cycle
+16:53:35 [jamie.image] INFO: Generating image: A haunting, abandoned cathedral on a stormy, blood-red night, its crumbling spir
+16:53:36 [jamie.image] INFO: Image generated: 83251 bytes
+17:07:34 [jamie.memory] INFO: Running memory prune cycle
+17:07:34 [jamie.memory] INFO: Running personality analysis cycle
+17:13:00 [discord.client] WARNING: davey is not installed, voice will NOT be supported
+17:13:00 [discord.client] INFO: logging in using static token
+17:13:01 [jamie] INFO: Database connected
+17:13:01 [jamie] INFO: LLM client started (model: qwen/qwen-2.5-72b-instruct)
+17:13:01 [jamie] INFO: Image generator started
+17:13:01 [jamie] INFO: Loaded cog: cogs.behavior
+17:13:01 [jamie] INFO: Loaded cog: cogs.chat
+17:13:01 [jamie] INFO: Loaded cog: cogs.counting
+17:13:01 [jamie] INFO: Loaded cog: cogs.economy
+17:13:01 [jamie] INFO: Loaded cog: cogs.events_extra
+17:13:01 [jamie] INFO: Loaded cog: cogs.format_utils
+17:13:01 [jamie] INFO: Loaded cog: cogs.image_cog
+17:13:01 [jamie] INFO: Loaded cog: cogs.info_cmds
+17:13:01 [jamie] INFO: Loaded cog: cogs.manage_cmds
+17:13:01 [jamie] INFO: Loaded cog: cogs.memory
+17:13:01 [jamie] INFO: Loaded cog: cogs.misc_cmds
+17:13:01 [jamie] INFO: Loaded cog: cogs.modlog_cmds
+17:13:01 [jamie] INFO: Loaded cog: cogs.mod_cmds
+17:13:01 [jamie] INFO: Loaded cog: cogs.music
+17:13:01 [jamie] INFO: Loaded cog: cogs.roles_cmds
+17:13:01 [jamie] INFO: Loaded cog: cogs.setup
+17:13:01 [jamie] INFO: Loaded cog: cogs.starboard
+17:13:01 [jamie] INFO: Loaded cog: cogs.utility
+17:13:01 [jamie] INFO: Loaded cog: cogs.welcome
+17:13:01 [jamie] INFO: Synced 34 global slash commands: ask, behavior-setup, bot, clear-persona, economy, generate, generate-persona, help, imagine, join, leave, manage, misc, mod, modlog, pause, personas, play, playlist, profile, ranks, rant, remember, resume, servermap, setchannel, setup, skip, stats, stop, summon-tempo, switch-persona, talk, volume
+17:13:02 [discord.gateway] INFO: Shard ID None has connected to Gateway (Session ID: 8c7e22c98c8b975a102745636b09d66c).
+17:13:04 [jamie] INFO: ════════════════════════════════════════
+17:13:04 [jamie] INFO:   JAMIE IS ONLINE
+17:13:04 [jamie] INFO:   Guilds: 1
+17:13:04 [jamie] INFO:   Users:  336
+17:13:04 [jamie] INFO: ════════════════════════════════════════
+17:13:04 [jamie.memory] INFO: Running personality analysis cycle
+17:13:04 [jamie.memory] INFO: Running memory prune cycle
+17:13:04 [jamie] INFO: Cleared guild command copies for Certified (1139997451835674667)
+17:22:29 [discord.client] WARNING: davey is not installed, voice will NOT be supported
+17:22:29 [discord.client] INFO: logging in using static token
+17:22:29 [jamie] INFO: Database connected
+17:22:29 [jamie] INFO: LLM client started (model: qwen/qwen-2.5-72b-instruct)
+17:22:29 [jamie] INFO: Image generator started
+17:22:29 [jamie] INFO: Loaded cog: cogs.behavior
+17:22:29 [jamie] INFO: Loaded cog: cogs.chat
+17:22:29 [jamie] INFO: Loaded cog: cogs.counting
+17:22:29 [jamie] INFO: Loaded cog: cogs.economy
+17:22:29 [jamie] INFO: Loaded cog: cogs.events_extra
+17:22:29 [jamie] INFO: Loaded cog: cogs.format_utils
+17:22:29 [jamie] INFO: Loaded cog: cogs.image_cog
+17:22:29 [jamie] INFO: Loaded cog: cogs.info_cmds
+17:22:29 [jamie] INFO: Loaded cog: cogs.manage_cmds
+17:22:29 [jamie] INFO: Loaded cog: cogs.memory
+17:22:29 [jamie] INFO: Loaded cog: cogs.misc_cmds
+17:22:29 [jamie] INFO: Loaded cog: cogs.modlog_cmds
+17:22:29 [jamie] INFO: Loaded cog: cogs.mod_cmds
+17:22:29 [jamie] INFO: Loaded cog: cogs.music
+17:22:29 [jamie] INFO: Loaded cog: cogs.roles_cmds
+17:22:29 [jamie] INFO: Loaded cog: cogs.setup
+17:22:29 [jamie] INFO: Loaded cog: cogs.starboard
+17:22:29 [jamie] INFO: Loaded cog: cogs.utility
+17:22:29 [jamie] INFO: Loaded cog: cogs.welcome
+17:22:30 [jamie] INFO: Synced 36 global slash commands: ask, behavior-setup, bot, clear-persona, economy, generate, generate-persona, help, imagine, join, leave, manage, misc, mod, modlog, omnipresent, omnipresent-chance, pause, personas, play, playlist, profile, ranks, rant, remember, resume, servermap, setchannel, setup, skip, stats, stop, summon-tempo, switch-persona, talk, volume
+17:22:30 [discord.gateway] INFO: Shard ID None has connected to Gateway (Session ID: a14d7a359f82b2d8970af853d9a0c4d2).
+17:22:32 [jamie] INFO: ════════════════════════════════════════
+17:22:32 [jamie] INFO:   JAMIE IS ONLINE
+17:22:32 [jamie] INFO:   Guilds: 1
+17:22:32 [jamie] INFO:   Users:  336
+17:22:32 [jamie] INFO: ════════════════════════════════════════
+17:22:32 [jamie.memory] INFO: Running personality analysis cycle
+17:22:32 [jamie.memory] INFO: Running memory prune cycle
+17:22:32 [jamie] INFO: Cleared guild command copies for Certified (1139997451835674667)
+17:30:33 [discord.client] WARNING: davey is not installed, voice will NOT be supported
+17:30:33 [discord.client] INFO: logging in using static token
+17:30:34 [jamie] INFO: Database connected
+17:30:34 [jamie] INFO: LLM client started (model: qwen/qwen-2.5-72b-instruct)
+17:30:34 [jamie] INFO: Image generator started
+17:30:34 [jamie] INFO: Loaded cog: cogs.behavior
+17:30:34 [jamie] INFO: Loaded cog: cogs.chat
+17:30:34 [jamie] INFO: Loaded cog: cogs.counting
+17:30:34 [jamie] INFO: Loaded cog: cogs.economy
+17:30:34 [jamie] INFO: Loaded cog: cogs.events_extra
+17:30:34 [jamie] INFO: Loaded cog: cogs.format_utils
+17:30:34 [jamie] INFO: Loaded cog: cogs.image_cog
+17:30:34 [jamie] INFO: Loaded cog: cogs.info_cmds
+17:30:34 [jamie] INFO: Loaded cog: cogs.manage_cmds
+17:30:34 [jamie] INFO: Loaded cog: cogs.memory
+17:30:34 [jamie] INFO: Loaded cog: cogs.misc_cmds
+17:30:34 [jamie] INFO: Loaded cog: cogs.modlog_cmds
+17:30:34 [jamie] INFO: Loaded cog: cogs.mod_cmds
+17:30:34 [jamie] INFO: Loaded cog: cogs.music
+17:30:34 [jamie] INFO: Loaded cog: cogs.roles_cmds
+17:30:34 [jamie] INFO: Loaded cog: cogs.setup
+17:30:34 [jamie] INFO: Loaded cog: cogs.starboard
+17:30:34 [jamie] INFO: Loaded cog: cogs.utility
+17:30:34 [jamie] INFO: Loaded cog: cogs.welcome
+17:30:34 [jamie] INFO: Synced 36 global slash commands: ask, behavior-setup, bot, clear-persona, economy, generate, generate-persona, help, imagine, join, leave, manage, misc, mod, modlog, omnipresent, omnipresent-chance, pause, personas, play, playlist, profile, ranks, rant, remember, resume, servermap, setchannel, setup, skip, stats, stop, summon-tempo, switch-persona, talk, volume
+17:30:35 [discord.gateway] INFO: Shard ID None has connected to Gateway (Session ID: 3952e835e090391575532ad684cc974e).
+17:30:37 [jamie] INFO: ════════════════════════════════════════
+17:30:37 [jamie] INFO:   JAMIE IS ONLINE
+17:30:37 [jamie] INFO:   Guilds: 1
+17:30:37 [jamie] INFO:   Users:  336
+17:30:37 [jamie] INFO: ════════════════════════════════════════
+17:30:37 [jamie.memory] INFO: Running personality analysis cycle
+17:30:37 [jamie.memory] INFO: Running memory prune cycle
+17:30:37 [jamie] INFO: Cleared guild command copies for Certified (1139997451835674667)
+17:47:45 [discord.client] WARNING: davey is not installed, voice will NOT be supported
+17:47:45 [discord.client] INFO: logging in using static token
+17:47:48 [jamie] INFO: Database connected
+17:47:48 [jamie] INFO: LLM client started (model: qwen/qwen-2.5-72b-instruct)
+17:47:48 [jamie] INFO: Image generator started
+17:47:48 [jamie] INFO: Loaded cog: cogs.behavior
+17:47:48 [jamie] INFO: Loaded cog: cogs.chat
+17:47:48 [jamie] INFO: Loaded cog: cogs.counting
+17:47:48 [jamie] INFO: Loaded cog: cogs.economy
+17:47:48 [jamie] INFO: Loaded cog: cogs.events_extra
+17:47:48 [jamie] INFO: Loaded cog: cogs.format_utils
+17:47:48 [jamie] INFO: Loaded cog: cogs.image_cog
+17:47:48 [jamie] INFO: Loaded cog: cogs.info_cmds
+17:47:48 [jamie] INFO: Loaded cog: cogs.manage_cmds
+17:47:48 [jamie] INFO: Loaded cog: cogs.memory
+17:47:48 [jamie] INFO: Loaded cog: cogs.misc_cmds
+17:47:48 [jamie] INFO: Loaded cog: cogs.modlog_cmds
+17:47:48 [jamie] INFO: Loaded cog: cogs.mod_cmds
+17:47:48 [jamie] INFO: Loaded cog: cogs.music
+17:47:48 [jamie] INFO: Loaded cog: cogs.roles_cmds
+17:47:48 [jamie] INFO: Loaded cog: cogs.setup
+17:47:48 [jamie] INFO: Loaded cog: cogs.starboard
+17:47:48 [jamie] INFO: Loaded cog: cogs.utility
+17:47:48 [jamie] INFO: Loaded cog: cogs.welcome
+17:47:48 [jamie] INFO: Synced 36 global slash commands: ask, behavior-setup, bot, clear-persona, economy, generate, generate-persona, help, imagine, join, leave, manage, misc, mod, modlog, omnipresent, omnipresent-chance, pause, personas, play, playlist, profile, ranks, rant, remember, resume, servermap, setchannel, setup, skip, stats, stop, summon-tempo, switch-persona, talk, volume
+17:47:48 [discord.gateway] INFO: Shard ID None has connected to Gateway (Session ID: 57c2b778bc24fe483bbd75f6e4a7820e).
+17:47:50 [jamie] INFO: ════════════════════════════════════════
+17:47:50 [jamie] INFO:   JAMIE IS ONLINE
+17:47:50 [jamie] INFO:   Guilds: 1
+17:47:50 [jamie] INFO:   Users:  336
+17:47:50 [jamie] INFO: ════════════════════════════════════════
+17:47:50 [jamie.memory] INFO: Running personality analysis cycle
+17:47:50 [jamie.memory] INFO: Running memory prune cycle
+17:47:50 [jamie] INFO: Cleared guild command copies for Certified (1139997451835674667)
+18:17:50 [jamie.memory] INFO: Running personality analysis cycle

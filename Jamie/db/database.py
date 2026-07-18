@@ -107,8 +107,86 @@ class JamieDatabase(ModerationMixin):
                 orig_message_id      INTEGER PRIMARY KEY,
                 starboard_message_id INTEGER NOT NULL
             );
+
+            CREATE TABLE IF NOT EXISTS custom_characters (
+                id            INTEGER PRIMARY KEY AUTOINCREMENT,
+                guild_id      INTEGER,
+                name          TEXT,
+                avatar_url    TEXT,
+                system_prompt TEXT,
+                shortcut      TEXT,
+                created_at    TEXT DEFAULT (datetime('now'))
+            );
+
+            CREATE TABLE IF NOT EXISTS behavior_logs (
+                id              INTEGER PRIMARY KEY AUTOINCREMENT,
+                guild_id        INTEGER,
+                user_id         INTEGER,
+                message_content TEXT,
+                behavior_tags   TEXT,  -- JSON array of observed behaviors
+                sentiment_score REAL DEFAULT 0.0,
+                timestamp       TEXT DEFAULT (datetime('now'))
+            );
+
+            CREATE TABLE IF NOT EXISTS generated_personas (
+                id              INTEGER PRIMARY KEY AUTOINCREMENT,
+                guild_id        INTEGER,
+                name            TEXT NOT NULL,
+                avatar_url      TEXT DEFAULT '',
+                personality    TEXT DEFAULT '',
+                color           INTEGER DEFAULT 0x39B7C4,
+                source_patterns TEXT,  -- JSON of behavior patterns that created this persona
+                confidence_score REAL DEFAULT 0.0,
+                is_active       INTEGER DEFAULT 0,
+                created_at      TEXT DEFAULT (datetime('now'))
+            );
+
+            CREATE INDEX IF NOT EXISTS idx_behavior_guild ON behavior_logs(guild_id);
+            CREATE INDEX IF NOT EXISTS idx_behavior_user ON behavior_logs(user_id, guild_id);
+            CREATE INDEX IF NOT EXISTS idx_personas_guild ON generated_personas(guild_id);
         """)
         await self._conn.commit()
+
+        # ── additive migrations (safe ALTERs for existing DBs) ────────
+        try:
+            await self._conn.execute(
+                "ALTER TABLE server_config ADD COLUMN active_persona_id INTEGER DEFAULT NULL"
+            )
+            await self._conn.commit()
+        except Exception:
+            pass  # column already exists
+        
+        try:
+            await self._conn.execute(
+                "ALTER TABLE server_config ADD COLUMN notes_log_channel_id INTEGER DEFAULT NULL"
+            )
+            await self._conn.commit()
+        except Exception:
+            pass  # column already exists
+        
+        try:
+            await self._conn.execute(
+                "ALTER TABLE server_config ADD COLUMN brain_channel_id INTEGER DEFAULT NULL"
+            )
+            await self._conn.commit()
+        except Exception:
+            pass  # column already exists
+
+        try:
+            await self._conn.execute(
+                "ALTER TABLE server_config ADD COLUMN omnipresent_mode INTEGER DEFAULT 1"
+            )
+            await self._conn.commit()
+        except Exception:
+            pass  # column already exists
+
+        try:
+            await self._conn.execute(
+                "ALTER TABLE server_config ADD COLUMN omnipresent_chance REAL DEFAULT 0.03"
+            )
+            await self._conn.commit()
+        except Exception:
+            pass  # column already exists
 
     # ── server config ────────────────────────────────────────────
 
@@ -451,3 +529,230 @@ class JamieDatabase(ModerationMixin):
             (orig_message_id,),
         )
         await self._conn.commit()
+
+    # ── custom characters ─────────────────────────────────────────
+
+    async def add_custom_character(self, guild_id: int, name: str, avatar_url: str, system_prompt: str, shortcut: str):
+        await self._conn.execute(
+            "INSERT INTO custom_characters (guild_id, name, avatar_url, system_prompt, shortcut) VALUES (?, ?, ?, ?, ?)",
+            (guild_id, name, avatar_url, system_prompt, shortcut),
+        )
+        await self._conn.commit()
+
+    async def get_custom_characters(self, guild_id: int) -> list[dict]:
+        cur = await self._conn.execute(
+            "SELECT * FROM custom_characters WHERE guild_id = ? ORDER BY id DESC",
+            (guild_id,),
+        )
+        return [dict(r) for r in await cur.fetchall()]
+
+    async def delete_custom_character(self, guild_id: int, char_id: int) -> bool:
+        cur = await self._conn.execute(
+            "DELETE FROM custom_characters WHERE id = ? AND guild_id = ?",
+            (char_id, guild_id),
+        )
+        await self._conn.commit()
+        return cur.rowcount > 0
+
+    async def get_custom_character_by_shortcut(self, guild_id: int, shortcut: str) -> dict | None:
+        cur = await self._conn.execute(
+            "SELECT * FROM custom_characters WHERE guild_id = ? AND LOWER(shortcut) = ?",
+            (guild_id, shortcut.lower()),
+        )
+        row = await cur.fetchone()
+        return dict(row) if row else None
+
+    # ── behavior logging (anonymous conversation patterns) ──────────
+
+    async def log_behavior(self, guild_id: int, user_id: int, message_content: str,
+                          behavior_tags: list[str], sentiment_score: float = 0.0):
+        """Log user behavior for persona generation."""
+        import json
+        cur = await self._conn.execute(
+            "INSERT INTO behavior_logs (guild_id, user_id, message_content, behavior_tags, sentiment_score) "
+            "VALUES (?, ?, ?, ?, ?)",
+            (guild_id, user_id, message_content, json.dumps(behavior_tags), sentiment_score),
+        )
+        await self._conn.commit()
+        return cur.lastrowid
+
+    async def get_behavior_patterns(self, guild_id: int, limit: int = 100) -> list[dict]:
+        """Get recent behavior patterns for analysis."""
+        cur = await self._conn.execute(
+            "SELECT * FROM behavior_logs WHERE guild_id = ? ORDER BY timestamp DESC LIMIT ?",
+            (guild_id, limit),
+        )
+        patterns = []
+        for row in await cur.fetchall():
+            pattern = dict(row)
+            import json
+            pattern["behavior_tags"] = json.loads(pattern["behavior_tags"] or "[]")
+            patterns.append(pattern)
+        return patterns
+
+    async def get_user_behavior_summary(self, guild_id: int, user_id: int) -> dict:
+        """Get behavior summary for a specific user."""
+        cur = await self._conn.execute(
+            "SELECT behavior_tags, sentiment_score, COUNT(*) as message_count "
+            "FROM behavior_logs WHERE guild_id = ? AND user_id = ? "
+            "GROUP BY behavior_tags, sentiment_score",
+            (guild_id, user_id),
+        )
+        import json
+        all_tags = []
+        sentiments = []
+        total_messages = 0
+        
+        for row in await cur.fetchall():
+            tags = json.loads(row["behavior_tags"] or "[]")
+            all_tags.extend(tags)
+            sentiments.append(row["sentiment_score"])
+            total_messages += row["message_count"]
+        
+        # Count tag frequencies
+        tag_counts = {}
+        for tag in all_tags:
+            tag_counts[tag] = tag_counts.get(tag, 0) + 1
+        
+        avg_sentiment = sum(sentiments) / len(sentiments) if sentiments else 0.0
+        
+        return {
+            "user_id": user_id,
+            "total_messages": total_messages,
+            "top_tags": sorted(tag_counts.items(), key=lambda x: x[1], reverse=True)[:10],
+            "avg_sentiment": avg_sentiment,
+            "tag_diversity": len(tag_counts),
+        }
+
+    # ── generated personas (from behavior analysis) ─────────────────
+
+    async def create_generated_persona(self, guild_id: int, name: str, personality: str,
+                                      source_patterns: dict, confidence_score: float = 0.0,
+                                      avatar_url: str = "", color: int = 0x39B7C4) -> int:
+        """Create a persona generated from behavior analysis."""
+        import json
+        cur = await self._conn.execute(
+            "INSERT INTO generated_personas (guild_id, name, avatar_url, personality, "
+            "source_patterns, confidence_score, is_active) VALUES (?, ?, ?, ?, ?, ?, 1)",
+            (guild_id, name, avatar_url, personality, json.dumps(source_patterns), confidence_score),
+        )
+        await self._conn.commit()
+        return cur.lastrowid
+
+    async def get_generated_personas(self, guild_id: int) -> list[dict]:
+        """Get all generated personas for a guild."""
+        cur = await self._conn.execute(
+            "SELECT * FROM generated_personas WHERE guild_id = ? ORDER BY created_at DESC",
+            (guild_id,),
+        )
+        personas = []
+        for row in await cur.fetchall():
+            persona = dict(row)
+            import json
+            persona["source_patterns"] = json.loads(persona["source_patterns"] or "{}")
+            personas.append(persona)
+        return personas
+
+    async def get_active_generated_persona(self, guild_id: int) -> dict | None:
+        """Get the currently active generated persona."""
+        cur = await self._conn.execute(
+            "SELECT * FROM generated_personas WHERE guild_id = ? AND is_active = 1 LIMIT 1",
+            (guild_id,),
+        )
+        row = await cur.fetchone()
+        if not row:
+            return None
+        persona = dict(row)
+        import json
+        persona["source_patterns"] = json.loads(persona["source_patterns"] or "{}")
+        return persona
+
+    async def set_active_generated_persona(self, guild_id: int, persona_id: int) -> None:
+        """Set a generated persona as active (deactivates others)."""
+        await self._conn.execute(
+            "UPDATE generated_personas SET is_active = 0 WHERE guild_id = ?",
+            (guild_id,),
+        )
+        await self._conn.execute(
+            "UPDATE generated_personas SET is_active = 1 WHERE id = ? AND guild_id = ?",
+            (persona_id, guild_id),
+        )
+        await self._conn.commit()
+
+    async def clear_active_persona(self, guild_id: int) -> None:
+        """Clear all active personas (return to default Jamie)."""
+        await self._conn.execute(
+            "UPDATE generated_personas SET is_active = 0 WHERE guild_id = ?",
+            (guild_id,),
+        )
+        await self._conn.commit()
+
+    # ── channel configuration for behavior system ─────────────────────
+
+    async def set_notes_log_channel(self, guild_id: int, channel_id: int) -> None:
+        """Set the channel for anonymous behavior logging."""
+        await self._conn.execute(
+            "UPDATE server_config SET notes_log_channel_id = ? WHERE guild_id = ?",
+            (channel_id, guild_id),
+        )
+        await self._conn.commit()
+
+    async def get_notes_log_channel(self, guild_id: int) -> int | None:
+        """Get the notes log channel ID."""
+        cur = await self._conn.execute(
+            "SELECT notes_log_channel_id FROM server_config WHERE guild_id = ?",
+            (guild_id,),
+        )
+        row = await cur.fetchone()
+        return row["notes_log_channel_id"] if row else None
+
+    async def set_brain_channel(self, guild_id: int, channel_id: int) -> None:
+        """Set the channel for posting generated personas."""
+        await self._conn.execute(
+            "UPDATE server_config SET brain_channel_id = ? WHERE guild_id = ?",
+            (channel_id, guild_id),
+        )
+        await self._conn.commit()
+
+    async def get_brain_channel(self, guild_id: int) -> int | None:
+        """Get the brain channel ID."""
+        cur = await self._conn.execute(
+            "SELECT brain_channel_id FROM server_config WHERE guild_id = ?",
+            (guild_id,),
+        )
+        row = await cur.fetchone()
+        return row["brain_channel_id"] if row else None
+
+    # ── Omnipresent Mode ────────────────────────────────────────────
+
+    async def set_omnipresent_mode(self, guild_id: int, enabled: bool) -> None:
+        await self._conn.execute(
+            "INSERT INTO server_config (guild_id, omnipresent_mode) VALUES (?, ?) "
+            "ON CONFLICT(guild_id) DO UPDATE SET omnipresent_mode = ?",
+            (guild_id, 1 if enabled else 0, 1 if enabled else 0)
+        )
+        await self._conn.commit()
+
+    async def get_omnipresent_mode(self, guild_id: int) -> bool:
+        cur = await self._conn.execute(
+            "SELECT omnipresent_mode FROM server_config WHERE guild_id = ?",
+            (guild_id,)
+        )
+        row = await cur.fetchone()
+        return bool(row["omnipresent_mode"]) if row else True  # Default to enabled
+
+    async def set_omnipresent_chance(self, guild_id: int, chance: float) -> None:
+        await self._conn.execute(
+            "INSERT INTO server_config (guild_id, omnipresent_chance) VALUES (?, ?) "
+            "ON CONFLICT(guild_id) DO UPDATE SET omnipresent_chance = ?",
+            (guild_id, chance, chance)
+        )
+        await self._conn.commit()
+
+    async def get_omnipresent_chance(self, guild_id: int) -> float:
+        cur = await self._conn.execute(
+            "SELECT omnipresent_chance FROM server_config WHERE guild_id = ?",
+            (guild_id,)
+        )
+        row = await cur.fetchone()
+        return row["omnipresent_chance"] if row else 0.03  # Default to 3%

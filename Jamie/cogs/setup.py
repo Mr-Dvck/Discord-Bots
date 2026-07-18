@@ -6,6 +6,7 @@ Sets the dedicated channel and registers the server.
 import discord
 from discord import app_commands
 from discord.ext import commands
+from discord.app_commands import checks as app_checks
 import logging
 
 log = logging.getLogger("jamie.setup")
@@ -134,11 +135,12 @@ class SetupCog(commands.Cog):
         except discord.Forbidden:
             pass
 
-        # Map server after responding so the interaction never times out
+        # Map server + seed personas after responding so the interaction never times out
         try:
             await self._cartograph_server(interaction.guild)
+            await db.seed_default_personas(interaction.guild.id)
             await interaction.followup.send(
-                f"🗺️ Mapped **{interaction.guild.name}** — channels + members are locked in."
+                f"🗺️ Mapped **{interaction.guild.name}** — channels + members + personas locked in."
             )
         except Exception as e:
             log.exception("Cartography failed")
@@ -160,6 +162,42 @@ class SetupCog(commands.Cog):
             f"✅ My home channel is now {channel.mention}",
             ephemeral=True,
         )
+
+    # ── Omnipresent Mode Commands ───────────────────────────────────────
+
+    @app_commands.command(
+        name="omnipresent",
+        description="Toggle Jamie's omnipresent mode (respond anywhere)"
+    )
+    @app_commands.checks.has_permissions(administrator=True)
+    async def omnipresent(self, interaction: discord.Interaction, enabled: bool):
+        """Enable/disable Jamie responding in any channel."""
+        await interaction.response.defer(thinking=True)
+        
+        db = self.bot.db
+        await db.set_omnipresent_mode(interaction.guild.id, enabled)
+        
+        status = "enabled" if enabled else "disabled"
+        await interaction.followup.send(f"✅ Omnipresent mode {status}! Jamie will {'respond in any channel' if enabled else 'only respond in his dedicated channel and when @mentioned'}.")
+
+    @app_commands.command(
+        name="omnipresent-chance",
+        description="Set chance for Jamie to respond in any channel (0.0-1.0)"
+    )
+    @app_commands.checks.has_permissions(administrator=True)
+    async def omnipresent_chance(self, interaction: discord.Interaction, chance: float):
+        """Set the percentage chance Jamie responds to any message."""
+        await interaction.response.defer(thinking=True)
+        
+        if not 0.0 <= chance <= 1.0:
+            await interaction.followup.send("❌ Chance must be between 0.0 (0%) and 1.0 (100%)")
+            return
+        
+        db = self.bot.db
+        await db.set_omnipresent_chance(interaction.guild.id, chance)
+        
+        percentage = int(chance * 100)
+        await interaction.followup.send(f"✅ Omnipresent chance set to {percentage}%! Jamie will respond to roughly {percentage}% of messages in any channel.")
 
     # ── server cartography ────────────────────────────────────────
 

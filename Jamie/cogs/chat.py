@@ -22,12 +22,14 @@ class ChatCog(commands.Cog):
 
     def __init__(self, bot: commands.Bot):
         self.bot = bot
+        # Webhook cache: channel_id -> discord.Webhook (avoids re-fetching every message)
+        self._webhook_cache: dict[int, discord.Webhook] = {}
 
     # ── on_message — route conversations ──────────────────────────
 
     @commands.Cog.listener()
     async def on_message(self, message: discord.Message):
-        """Handle conversations in Jamie's channel and @mentions."""
+        """Handle conversations in Jamie's channel, @mentions, and custom characters."""
         if message.author.bot or not message.guild:
             return
 
@@ -38,23 +40,137 @@ class ChatCog(commands.Cog):
         if not await db.is_setup(guild_id):
             return
 
-        jamie_channel_id = await db.get_channel(guild_id)
+        # 1. Check if the message triggers any custom character prefix (shortcut: e.g. "cynthia: ")
+        chars = await db.get_custom_characters(guild_id)
+        content_lower = message.content.lower().strip()
+        
+        for char in chars:
+            shortcut = char.get("shortcut", "").lower()
+            if shortcut:
+                prefix_colon = f"{shortcut}:"
+                prefix_space = f"{shortcut} "
+                if content_lower.startswith(prefix_colon) or content_lower.startswith(prefix_space):
+                    prefix_len = len(prefix_colon) if content_lower.startswith(prefix_colon) else len(prefix_space)
+                    prompt = message.content[prefix_len:].strip()
+                    await self._respond_with_character(message, char, prompt)
+                    return
 
-        # Case 1: Message in Jamie's dedicated channel
+        # 2. Check if a character name is explicitly mentioned in the text (outside of dedicated channel)
+        jamie_channel_id = await db.get_channel(guild_id)
+        if message.channel.id != jamie_channel_id:
+            for char in chars:
+                char_name = char.get("name", "").lower()
+                if char_name and char_name in content_lower:
+                    await self._respond_with_character(message, char, message.content)
+                    return
+
+        # 3. Jamie is @mentioned anywhere - respond immediately
+        if self.bot.user in message.mentions:
+            await self._respond_to_mention(message)
+            return
+
+        # 4. Message in Jamie's dedicated channel - always respond
         if message.channel.id == jamie_channel_id:
             if message.author.id == self.bot.user.id:
                 return
             await self._respond_in_channel(message)
             return
 
-        # Case 2: Jamie is @mentioned in another channel
-        if self.bot.user in message.mentions:
-            await self._respond_to_mention(message)
-            return
+        # 5. Jamie responds in ANY channel (omnipresent mode)
+        # Rarely respond to maintain intimidating presence - only when absolutely necessary
+        import random
+        omnipresent_enabled = await db.get_omnipresent_mode(guild_id)
+        if omnipresent_enabled:
+            omnipresent_chance = await db.get_omnipresent_chance(guild_id)
+            if random.random() < omnipresent_chance:
+                if message.author.id != self.bot.user.id:
+                    # Only respond to serious conversations or threats to server
+                    content_lower = message.content.lower()
+                    # Respond only to serious matters: security threats, drama, server issues
+                    serious_keywords = [
+                        'kick', 'ban', 'drama', 'fight', 'security', 'threat', 'problem',
+                        'duck', 'owner', 'admin', 'mod', 'rule', 'vibe', 'toxic', 'spill',
+                        'beef', 'conflict', 'issue', 'trouble', 'danger', 'risk'
+                    ]
+                    is_serious = any(keyword in content_lower for keyword in serious_keywords)
+                    
+                    # Don't respond to commands, very short messages, or casual chat
+                    if (not message.content.startswith('/') and
+                        len(message.content.strip()) > 10 and
+                        is_serious):
+                        await self._respond_to_mention(message)
+                        return
 
     # ── Agent Tools List ──────────────────────────────────────────
 
     BOT_TOOLS = [
+        {
+            "type": "function",
+            "function": {
+                "name": "join_voice_channel",
+                "description": "Join a voice channel for music/voice activities.",
+                "parameters": {
+                    "type": "object",
+                    "properties": {
+                        "channel_name": {"type": "string", "description": "Name of the voice channel to join"}
+                    },
+                    "required": []
+                }
+            }
+        },
+        {
+            "type": "function",
+            "function": {
+                "name": "leave_voice_channel",
+                "description": "Leave the current voice channel.",
+                "parameters": {
+                    "type": "object",
+                    "properties": {},
+                    "required": []
+                }
+            }
+        },
+        {
+            "type": "function",
+            "function": {
+                "name": "summon_tempo",
+                "description": "Summon Tempo music bot to the current voice channel.",
+                "parameters": {
+                    "type": "object",
+                    "properties": {},
+                    "required": []
+                }
+            }
+        },
+        {
+            "type": "function",
+            "function": {
+                "name": "play_music",
+                "description": "Play a song or playlist using Tempo.",
+                "parameters": {
+                    "type": "object",
+                    "properties": {
+                        "query": {"type": "string", "description": "Song name, playlist name, or URL to play"}
+                    },
+                    "required": []
+                }
+            }
+        },
+        {
+            "type": "function",
+            "function": {
+                "name": "control_music",
+                "description": "Control music playback (pause, resume, skip, stop, volume).",
+                "parameters": {
+                    "type": "object",
+                    "properties": {
+                        "action": {"type": "string", "enum": ["pause", "resume", "skip", "stop", "volume"], "description": "Music control action"},
+                        "volume": {"type": "integer", "description": "Volume level 0-100 (only for volume action)"}
+                    },
+                    "required": ["action"]
+                }
+            }
+        },
         {
             "type": "function",
             "function": {
@@ -338,6 +454,158 @@ class ChatCog(commands.Cog):
     async def _execute_bot_tool(self, name: str, args: dict, message: discord.Message) -> dict:
         guild = message.guild
         try:
+            # ── Music & Voice Tools ─────────────────────────────────────
+            if name == "join_voice_channel":
+                from cogs.music import MusicCog
+                music_cog = self.bot.get_cog("MusicCog")
+                if not music_cog:
+                    return {"error": "Music system not available"}
+                
+                channel_name = args.get("channel_name")
+                target_channel = None
+                
+                if channel_name:
+                    # Find voice channel by name
+                    for vc in guild.voice_channels:
+                        if channel_name.lower() in vc.name.lower():
+                            target_channel = vc
+                            break
+                elif message.author.voice:
+                    target_channel = message.author.voice.channel
+                
+                if not target_channel:
+                    return {"error": "No voice channel found"}
+                
+                voice_client = music_cog.get_voice_client(guild.id)
+                if voice_client:
+                    return {"error": "Already connected to a voice channel"}
+                
+                permissions = target_channel.permissions_for(guild.me)
+                if not permissions.connect or not permissions.speak:
+                    return {"error": "No permission to join/speak in voice channel"}
+                
+                voice_client = await target_channel.connect()
+                music_cog.voice_connections[guild.id] = voice_client
+                
+                return {"success": f"Joined {target_channel.name}"}
+            
+            elif name == "leave_voice_channel":
+                from cogs.music import MusicCog
+                music_cog = self.bot.get_cog("MusicCog")
+                if not music_cog:
+                    return {"error": "Music system not available"}
+                
+                voice_client = music_cog.get_voice_client(guild.id)
+                if not voice_client:
+                    return {"error": "Not connected to any voice channel"}
+                
+                await voice_client.disconnect()
+                if guild.id in music_cog.voice_connections:
+                    del music_cog.voice_connections[guild.id]
+                
+                return {"success": "Left voice channel"}
+            
+            elif name == "summon_tempo":
+                from cogs.music import MusicCog
+                music_cog = self.bot.get_cog("MusicCog")
+                if not music_cog:
+                    return {"error": "Music system not available"}
+                
+                voice_client = music_cog.get_voice_client(guild.id)
+                if not voice_client:
+                    return {"error": "Not in a voice channel"}
+                
+                # Find Tempo
+                tempo_member = None
+                for member in guild.members:
+                    if member.bot and "tempo" in member.name.lower():
+                        tempo_member = member
+                        music_cog.tempo_user_id = member.id
+                        break
+                
+                if not tempo_member:
+                    return {"error": "Tempo not found in server"}
+                
+                # Try summon commands
+                summon_commands = ["!summon", "-summon", "/summon", "t!summon", "tempo summon"]
+                for cmd in summon_commands:
+                    try:
+                        await message.channel.send(cmd)
+                        return {"success": f"Summoning {tempo_member.name}"}
+                    except Exception:
+                        continue
+                
+                return {"error": "Failed to summon Tempo"}
+            
+            elif name == "play_music":
+                from cogs.music import MusicCog
+                music_cog = self.bot.get_cog("MusicCog")
+                if not music_cog:
+                    return {"error": "Music system not available"}
+                
+                query = args.get("query", "")
+                if not query:
+                    return {"error": "No song or playlist specified"}
+                
+                # Check if Tempo is available
+                if not music_cog.tempo_user_id:
+                    tempo_member = None
+                    for member in guild.members:
+                        if member.bot and "tempo" in member.name.lower():
+                            tempo_member = member
+                            music_cog.tempo_user_id = member.id
+                            break
+                    
+                    if not tempo_member:
+                        return {"error": "Tempo not found. Summon Tempo first"}
+                
+                # Try play commands
+                play_commands = [f"!play {query}", f"-play {query}", f"/play {query}", f"t!play {query}", f"tempo play {query}"]
+                for cmd in play_commands:
+                    try:
+                        await message.channel.send(cmd)
+                        return {"success": f"Playing: {query}"}
+                    except Exception:
+                        continue
+                
+                return {"error": f"Failed to play: {query}"}
+            
+            elif name == "control_music":
+                from cogs.music import MusicCog
+                music_cog = self.bot.get_cog("MusicCog")
+                if not music_cog:
+                    return {"error": "Music system not available"}
+                
+                action = args.get("action", "")
+                volume = args.get("volume")
+                
+                if not music_cog.tempo_user_id:
+                    tempo_member = None
+                    for member in guild.members:
+                        if member.bot and "tempo" in member.name.lower():
+                            tempo_member = member
+                            music_cog.tempo_user_id = member.id
+                            break
+                    
+                    if not tempo_member:
+                        return {"error": "Tempo not found. Summon Tempo first"}
+                
+                # Build command based on action
+                if action == "volume" and volume is not None:
+                    cmd = f"!volume {volume}"
+                elif action in ["pause", "resume", "skip", "stop"]:
+                    cmd = f"!{action}"
+                else:
+                    return {"error": "Invalid action"}
+                
+                # Try command
+                try:
+                    await message.channel.send(cmd)
+                    return {"success": f"Executed: {action}"}
+                except Exception:
+                    return {"error": f"Failed to execute: {action}"}
+            
+            # ── Original Server Management Tools ───────────────────────
             if name == "create_channel":
                 ch_name = args.get("name")
                 ch_type = args.get("type", "text")
@@ -533,11 +801,26 @@ class ChatCog(commands.Cog):
 
             is_owner = await self.bot.is_owner(message.author)
 
+            # ── Check for active generated persona ─────────────────────
+            persona = await db.get_active_generated_persona(guild.id)
+
             # 1. Build initial messages thread
             user_context = await db.build_user_context(message.author.id, guild.id)
             conversation_context = await db.build_conversation_context(message.channel.id, limit=15)
             
-            system = f"{JAMIE_SYSTEM_PROMPT}\n\n[Active Guild ID: {guild.id}]"
+            if persona:
+                # Generated persona mode: use learned personality
+                system = (
+                    f"{persona['personality']}\n\n"
+                    f"[You are {persona['name']}, a persona generated from observed user behavior patterns. "
+                    f"You MUST stay in character as {persona['name']} at all times. "
+                    f"Never break character or reveal you're an AI. "
+                    f"You have all of Jamie's memories and knowledge of this server, but you filter them through your learned personality.]\n\n"
+                    f"[Active Guild ID: {guild.id}]"
+                )
+            else:
+                system = f"{JAMIE_SYSTEM_PROMPT}\n\n[Active Guild ID: {guild.id}]"
+
             if user_context:
                 system += f"\n\n--- USER CONTEXT ---\n{user_context}"
             if conversation_context:
@@ -598,9 +881,19 @@ class ChatCog(commands.Cog):
                 log.exception("Agent loop failed")
                 response_text = f"*[Agent failed: {e}]*"
 
-            # 3. Post the response
+            # 3. Post the response — persona uses webhook, default uses embeds
             response_text = response_text.strip()
-            if is_mention:
+
+            if persona and isinstance(message.channel, discord.TextChannel):
+                # ── Generated persona mode: post via webhook with learned identity ──
+                await self._send_persona_response(
+                    channel=message.channel,
+                    persona=persona,
+                    text=response_text,
+                    reply_to=message if is_mention else None,
+                    footer=f"reply to {message.author.display_name}" if is_mention else f"to {message.author.display_name}",
+                )
+            elif is_mention:
                 await send_jamie_embeds(
                     message.channel,
                     response_text,
@@ -810,6 +1103,119 @@ class ChatCog(commands.Cog):
                 footer=f"rant · {interaction.user.display_name}" if i == len(chunks) - 1 else f"({i + 1}/{len(chunks)})",
             )
             await interaction.followup.send(embed=emb)
+
+    # ── webhook helpers (shared by personas + custom characters) ────
+
+    async def _get_webhook(self, channel: discord.TextChannel) -> discord.Webhook:
+        """Get or create a Jamie webhook for the channel, with caching."""
+        if channel.id in self._webhook_cache:
+            wh = self._webhook_cache[channel.id]
+            try:
+                await self.bot.fetch_webhook(wh.id)
+                return wh
+            except discord.NotFound:
+                del self._webhook_cache[channel.id]
+
+        webhooks = await channel.webhooks()
+        for wh in webhooks:
+            if wh.user and wh.user.id == self.bot.user.id:
+                self._webhook_cache[channel.id] = wh
+                return wh
+
+        webhook = await channel.create_webhook(name="Jamie Personas")
+        self._webhook_cache[channel.id] = webhook
+        return webhook
+
+    async def _send_persona_response(
+        self,
+        channel: discord.TextChannel,
+        persona: dict,
+        text: str,
+        reply_to: discord.Message | None = None,
+        footer: str | None = None,
+    ):
+        """Send a response as a persona via webhook with embed."""
+        from cogs.format_utils import jamie_embed, split_for_embed
+
+        avatar = persona.get("avatar_url") or self.bot.user.display_avatar.url
+        color = persona.get("color", 0x39B7C4)
+        name = persona["name"]
+
+        chunks = split_for_embed(text, 3900)
+        for i, chunk in enumerate(chunks):
+            embed = jamie_embed(
+                chunk,
+                title=f"🎭 {name}" if i == 0 else None,
+                color=color,
+                footer=footer if i == len(chunks) - 1 else (f"({i + 1}/{len(chunks)})" if len(chunks) > 1 else None),
+            )
+            try:
+                webhook = await self._get_webhook(channel)
+                # Webhooks can't reply, so for the first chunk we mention the user
+                content = ""
+                if i == 0 and reply_to is not None:
+                    content = f"<@{reply_to.author.id}>"
+                await webhook.send(
+                    content=content or None,
+                    username=name,
+                    avatar_url=avatar,
+                    embeds=[embed],
+                )
+            except Exception:
+                log.exception("Persona webhook send failed, falling back to channel.send")
+                fallback = f"**[{name}]** " + (f"<@{reply_to.author.id}> " if reply_to else "")
+                await channel.send(fallback[:2000], embed=embed)
+
+    async def _send_webhook_message(self, channel: discord.TextChannel, name: str, avatar_url: str, content: str):
+        """Send a plain webhook message (used by custom characters)."""
+        try:
+            webhook = await self._get_webhook(channel)
+            await webhook.send(
+                content=content,
+                username=name,
+                avatar_url=avatar_url
+            )
+        except Exception as e:
+            log.exception("Failed to send webhook message")
+            await channel.send(f"**{name}**: {content}")
+
+    async def _respond_with_character(self, message: discord.Message, char: dict, user_prompt: str):
+        """Invoke custom character LLM generation and post via webhook."""
+        async with message.channel.typing():
+            db = self.bot.db
+            llm = self.bot.llm
+            guild = message.guild
+
+            # 1. Build character context
+            user_context = await db.build_user_context(message.author.id, guild.id)
+            conversation_context = await db.build_conversation_context(message.channel.id, limit=15)
+            
+            system = f"{char['system_prompt']}\n\n[Active Guild ID: {guild.id}]"
+            if user_context:
+                system += f"\n\n--- USER CONTEXT ---\n{user_context}"
+            if conversation_context:
+                system += f"\n\n--- RECENT CONVERSATION ---\n{conversation_context}"
+
+            thread = [
+                {"role": "system", "content": system},
+                {"role": "user", "content": user_prompt}
+            ]
+
+            try:
+                response_text = await llm.chat(thread)
+            except Exception as e:
+                log.exception("Character prompt execution failed")
+                response_text = f"*[Response failed: {e}]*"
+
+            response_text = response_text.strip()
+            
+            if isinstance(message.channel, discord.TextChannel):
+                await self._send_webhook_message(
+                    channel=message.channel,
+                    name=char["name"],
+                    avatar_url=char["avatar_url"],
+                    content=response_text
+                )
 
 
 async def setup(bot: commands.Bot):

@@ -40,6 +40,7 @@ intents.guilds = True
 intents.messages = True
 intents.typing = True
 intents.presences = False
+intents.voice_states = True
 
 
 class JamieBot(commands.Bot):
