@@ -14,6 +14,7 @@ const NAV_ITEMS = [
   { href: "/commands", label: "Commands", icon: "⌨️" },
   { href: "/modules", label: "Modules", icon: "⚙️" },
   { href: "/knowledge-base", label: "Knowledge Base", icon: "📚" },
+  { href: "/onboarding", label: "Onboarding", icon: "📝" },
 ];
 
 export default function Sidebar() {

@@ -614,3 +614,26 @@ export function deleteCustomCharacter(guildId: string, charId: number): boolean 
     db.close();
   }
 }
+
+export type OnboardingRecord = {
+  user_id: string;
+  guild_id: string;
+  started_at: string;
+  completed_at: string | null;
+  status: string;
+  personality_data: string;
+  interests: string;
+};
+
+export function getOnboardingRecords(guildId: string): OnboardingRecord[] {
+  const { db } = openDb();
+  try {
+    const records = db
+      .prepare("SELECT * FROM onboarding_status WHERE guild_id = ? ORDER BY started_at DESC")
+      .all(String(guildId)) as OnboardingRecord[];
+    return records;
+  } finally {
+    db.close();
+  }
+}
+

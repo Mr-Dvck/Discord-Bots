@@ -59,7 +59,7 @@ class MemoryCog(commands.Cog):
             last_seen=datetime.now(timezone.utc).isoformat(),
         )
 
-    # ── on_member_join — register new members ────────────────────
+    # ── on_member_join — register new members & send onboarding DM ────────────────────
 
     @commands.Cog.listener()
     async def on_member_join(self, member: discord.Member):
@@ -68,15 +68,83 @@ class MemoryCog(commands.Cog):
             return
 
         db = self.bot.db
-        await db.upsert_user(
-            user_id=member.id,
-            guild_id=member.guild.id,
-            username=member.name,
-            display_name=member.display_name,
-            avatar_url=member.display_avatar.url if member.display_avatar else "",
-            joined_at=member.joined_at.isoformat() if member.joined_at else "",
-            last_seen=datetime.now(timezone.utc).isoformat(),
-        )
+        profile = await db.get_user_profile(member.id, member.guild.id)
+        
+        # Only send onboarding DM if user is new to this server
+        if not profile:
+            await db.upsert_user(
+                user_id=member.id,
+                guild_id=member.guild.id,
+                username=member.name,
+                display_name=member.display_name,
+                avatar_url=member.display_avatar.url if member.display_avatar else "",
+                joined_at=member.joined_at.isoformat() if member.joined_at else "",
+                last_seen=datetime.now(timezone.utc).isoformat(),
+            )
+            # Send onboarding DM
+            try:
+                embed = discord.Embed(
+                    title="👋 Welcome to the Server!",
+                    description=f"Hi {member.name}! I'm Jamie, the server's AI companion. I'd love to learn more about you.",
+                    color=discord.Color.blue()
+                )
+                embed.add_field(
+                    name="Start Your Onboarding",
+                    value="Click the button below to start a quick onboarding process with me. This will help me understand you better and grant you access to more channels!",
+                    inline=False
+                )
+                embed.set_footer(text="Your onboarding results are visible to admins.")
+                
+                view = discord.ui.View()
+                button = discord.ui.Button(
+                    label="📝 Start Onboarding",
+                    style=discord.ButtonStyle.primary,
+                    emoji="📝"
+                )
+                
+                async def button_callback(interaction: discord.Interaction):
+                    await interaction.response.defer(ephemeral=True)
+                    # Store that we've started onboarding for this user
+                    await db.execute(
+                        "INSERT OR IGNORE INTO onboarding_status (user_id, guild_id, started_at, status) VALUES (?, ?, ?, ?)",
+                        (member.id, member.guild.id, datetime.now(timezone.utc).isoformat(), "pending")
+                    )
+                    await db._conn.commit()
+                    
+                    # Send them to the onboarding channel or DM
+                    from cogs.onboarding import OnboardingCog
+                    if self.bot.get_cog("OnboardingCog"):
+                        # Store the join timestamp for onboarding
+                        self.bot._pending_onboarding[member.id] = {
+                            "guild_id": member.guild.id,
+                            "joined_at": datetime.now(timezone.utc).isoformat()
+                        }
+                    
+                    await interaction.followup.send(
+                        "I've sent you a DM! Please check your messages to continue the onboarding process.",
+                        ephemeral=True
+                    )
+                
+                button.callback = button_callback
+                view.add_item(button)
+                
+                await member.send(embed=embed, view=view)
+                log.info("Sent onboarding DM to new member %d", member.id)
+            except discord.Forbidden:
+                log.warning("Cannot DM member %d - DMs may be disabled", member.id)
+            except Exception as e:
+                log.error("Failed to send onboarding DM to %d: %s", member.id, e)
+        else:
+            # Update existing member info
+            await db.upsert_user(
+                user_id=member.id,
+                guild_id=member.guild.id,
+                username=member.name,
+                display_name=member.display_name,
+                avatar_url=member.display_avatar.url if member.display_avatar else "",
+                joined_at=member.joined_at.isoformat() if member.joined_at else "",
+                last_seen=datetime.now(timezone.utc).isoformat(),
+            )
         # Join banners are handled by WelcomeCog (Dyno-style), not here.
 
     # ── on_member_remove — note departure ─────────────────────────

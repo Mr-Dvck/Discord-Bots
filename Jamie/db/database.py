@@ -82,6 +82,17 @@ class JamieDatabase(ModerationMixin):
             CREATE INDEX IF NOT EXISTS idx_msg_guild   ON message_memory(guild_id);
             CREATE INDEX IF NOT EXISTS idx_msg_user     ON message_memory(user_id, guild_id);
             CREATE INDEX IF NOT EXISTS idx_msg_channel   ON message_memory(channel_id);
+
+            CREATE TABLE IF NOT EXISTS onboarding_status (
+                user_id     INTEGER,
+                guild_id    INTEGER,
+                started_at  TEXT,
+                completed_at TEXT,
+                status      TEXT DEFAULT 'pending',
+                personality_data TEXT DEFAULT '',
+                interests TEXT DEFAULT '',
+                PRIMARY KEY (user_id, guild_id)
+            );
             CREATE INDEX IF NOT EXISTS idx_msg_time     ON message_memory(timestamp);
             CREATE INDEX IF NOT EXISTS idx_profile_guild ON user_profiles(guild_id);
 
@@ -748,6 +759,47 @@ class JamieDatabase(ModerationMixin):
             (guild_id, chance, chance)
         )
         await self._conn.commit()
+
+    # ── Onboarding Status ────────────────────────────────────────────
+
+    async def get_onboarding_status(self, user_id: int, guild_id: int) -> dict | None:
+        """Get onboarding status for a user."""
+        cur = await self._conn.execute(
+            "SELECT * FROM onboarding_status WHERE user_id = ? AND guild_id = ?",
+            (user_id, guild_id),
+        )
+        row = await cur.fetchone()
+        return dict(row) if row else None
+
+    async def set_onboarding_status(self, user_id: int, guild_id: int, status: str, personality_data: str = "", interests: str = "") -> None:
+        """Update onboarding status for a user."""
+        await self._conn.execute(
+            "INSERT OR REPLACE INTO onboarding_status (user_id, guild_id, status, personality_data, interests) VALUES (?, ?, ?, ?, ?)",
+            (user_id, guild_id, status, personality_data, interests),
+        )
+        await self._conn.commit()
+
+    async def complete_onboarding(self, user_id: int, guild_id: int, personality_summary: str, interests: str) -> None:
+        """Mark onboarding as complete and store results."""
+        await self._conn.execute(
+            """UPDATE onboarding_status
+               SET status = 'completed',
+                   completed_at = ?,
+                   personality_data = ?,
+                   interests = ?
+               WHERE user_id = ? AND guild_id = ?""",
+            (datetime.now(timezone.utc).isoformat(), personality_summary, interests, user_id, guild_id),
+        )
+        await self._conn.commit()
+
+    async def get_onboarding_for_admins(self, guild_id: int) -> list[dict]:
+        """Get all onboarding records for a guild (for admin viewing)."""
+        cur = await self._conn.execute(
+            "SELECT * FROM onboarding_status WHERE guild_id = ? ORDER BY started_at DESC",
+            (guild_id,),
+        )
+        rows = await cur.fetchall()
+        return [dict(row) for row in rows]
 
     async def get_omnipresent_chance(self, guild_id: int) -> float:
         cur = await self._conn.execute(
