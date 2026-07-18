@@ -1,7 +1,16 @@
 import { NextResponse } from "next/server";
-import { getGuildCommandsConfig, setGuildCommandsConfig } from "@/lib/jamie-db";
 
-// Fallback implementations in case exports fail
+// Use dynamic import to work around Turbopack's static export analysis issues
+// on Vercel. jamie-db.ts uses node:sqlite + turbopackIgnore comments which
+// confuse the bundler's ability to statically detect named exports.
+async function loadCommandsConfig() {
+  const mod = await import("@/lib/jamie-db");
+  return {
+    getGuildCommandsConfig: mod.getGuildCommandsConfig,
+    setGuildCommandsConfig: mod.setGuildCommandsConfig,
+  };
+}
+
 function fallbackGetConfig(guildId: string): Record<string, boolean> {
   return {};
 }
@@ -16,8 +25,19 @@ export async function GET(req: Request) {
     if (!guildId) {
       return NextResponse.json({ error: "guildId required" }, { status: 400 });
     }
-    
-    const config = getGuildCommandsConfig ? getGuildCommandsConfig(guildId) : fallbackGetConfig(guildId);
+
+    let config: Record<string, boolean> = {};
+    try {
+      const fns = await loadCommandsConfig();
+      if (typeof fns.getGuildCommandsConfig === "function") {
+        config = fns.getGuildCommandsConfig(guildId);
+      } else {
+        config = fallbackGetConfig(guildId);
+      }
+    } catch {
+      config = fallbackGetConfig(guildId);
+    }
+
     return NextResponse.json({ config });
   } catch (e: unknown) {
     const message = e instanceof Error ? e.message : String(e);
@@ -37,7 +57,18 @@ export async function PUT(req: Request) {
       return NextResponse.json({ error: "config object required" }, { status: 400 });
     }
 
-    const nextConfig = setGuildCommandsConfig ? setGuildCommandsConfig(guildId, config) : fallbackSetConfig(guildId, config);
+    let nextConfig: Record<string, boolean> = {};
+    try {
+      const fns = await loadCommandsConfig();
+      if (typeof fns.setGuildCommandsConfig === "function") {
+        nextConfig = fns.setGuildCommandsConfig(guildId, config);
+      } else {
+        nextConfig = fallbackSetConfig(guildId, config);
+      }
+    } catch {
+      nextConfig = fallbackSetConfig(guildId, config);
+    }
+
     return NextResponse.json({ config: nextConfig, ok: true });
   } catch (e: unknown) {
     const message = e instanceof Error ? e.message : String(e);
