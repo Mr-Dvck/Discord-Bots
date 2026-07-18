@@ -727,3 +727,328 @@ Traceback (most recent call last):
     raise RuntimeError('davey library needed in order to use voice')
 RuntimeError: davey library needed in order to use voice
 02:39:15 [jamie.memory] INFO: Running personality analysis cycle
+02:49:20 [discord.client] WARNING: PyNaCl is not installed, voice will NOT be supported
+02:49:20 [discord.client] INFO: logging in using static token
+02:49:21 [jamie] INFO: Database connected
+02:49:21 [jamie] INFO: LLM client started (model: qwen/qwen-2.5-72b-instruct)
+02:49:21 [jamie] INFO: Image generator started
+02:49:21 [jamie] INFO: Loaded cog: cogs.behavior
+02:49:21 [jamie] INFO: Loaded cog: cogs.chat
+02:49:21 [jamie] INFO: Loaded cog: cogs.counting
+02:49:21 [jamie] INFO: Loaded cog: cogs.economy
+02:49:21 [jamie] INFO: Loaded cog: cogs.events_extra
+02:49:21 [jamie] INFO: Loaded cog: cogs.format_utils
+02:49:21 [jamie] INFO: Loaded cog: cogs.image_cog
+02:49:21 [jamie] INFO: Loaded cog: cogs.info_cmds
+02:49:21 [jamie] INFO: Loaded cog: cogs.manage_cmds
+02:49:21 [jamie] INFO: Loaded cog: cogs.memory
+02:49:21 [jamie] INFO: Loaded cog: cogs.misc_cmds
+02:49:21 [jamie] INFO: Loaded cog: cogs.modlog_cmds
+02:49:21 [jamie] INFO: Loaded cog: cogs.mod_cmds
+02:49:21 [jamie] INFO: Loaded cog: cogs.music
+02:49:21 [jamie] INFO: Loaded cog: cogs.roles_cmds
+02:49:21 [jamie] INFO: Loaded cog: cogs.setup
+02:49:21 [jamie] INFO: Loaded cog: cogs.starboard
+02:49:21 [jamie] INFO: Loaded cog: cogs.utility
+02:49:21 [jamie] INFO: Loaded cog: cogs.welcome
+02:49:21 [jamie] INFO: Synced 36 global slash commands: ask, behavior-setup, bot, clear-persona, economy, generate, generate-persona, help, imagine, join, leave, manage, misc, mod, modlog, omnipresent, omnipresent-chance, pause, personas, play, playlist, profile, ranks, rant, remember, resume, servermap, setchannel, setup, skip, stats, stop, summon-tempo, switch-persona, talk, volume
+02:49:22 [discord.gateway] INFO: Shard ID None has connected to Gateway (Session ID: e3853d1e3138c175a56f81b9849f32f6).
+02:49:24 [jamie] INFO: ════════════════════════════════════════
+02:49:24 [jamie] INFO:   JAMIE IS ONLINE
+02:49:24 [jamie] INFO:   Guilds: 1
+02:49:24 [jamie] INFO:   Users:  336
+02:49:24 [jamie] INFO: ════════════════════════════════════════
+02:49:24 [jamie.memory] INFO: Running personality analysis cycle
+02:49:24 [jamie.memory] INFO: Running memory prune cycle
+02:49:24 [jamie] INFO: Cleared guild command copies for Certified (1139997451835674667)
+02:51:23 [jamie] ERROR: Slash command error: Command 'join' raised an exception: NotFound: 404 Not Found (error code: 10062): Unknown interaction
+Traceback (most recent call last):
+  File "c:\.A - Projects\Bots\Discord-Bots\Jamie\venv\Lib\site-packages\discord\app_commands\commands.py", line 858, in _do_call
+    return await self._callback(self.binding, interaction, **params)  # type: ignore
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "c:\.A - Projects\Bots\Discord-Bots\Jamie\cogs\music.py", line 63, in join_vc
+    await interaction.response.defer()
+  File "c:\.A - Projects\Bots\Discord-Bots\Jamie\venv\Lib\site-packages\discord\interactions.py", line 892, in defer
+    response = await adapter.create_interaction_response(
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    ...<6 lines>...
+    )
+    ^
+  File "c:\.A - Projects\Bots\Discord-Bots\Jamie\venv\Lib\site-packages\discord\webhook\async_.py", line 224, in request
+    raise NotFound(response, data)
+discord.errors.NotFound: 404 Not Found (error code: 10062): Unknown interaction
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "c:\.A - Projects\Bots\Discord-Bots\Jamie\venv\Lib\site-packages\discord\app_commands\tree.py", line 1302, in _call
+    await command._invoke_with_namespace(interaction, namespace)
+  File "c:\.A - Projects\Bots\Discord-Bots\Jamie\venv\Lib\site-packages\discord\app_commands\commands.py", line 884, in _invoke_with_namespace
+    return await self._do_call(interaction, transformed_values)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "c:\.A - Projects\Bots\Discord-Bots\Jamie\venv\Lib\site-packages\discord\app_commands\commands.py", line 877, in _do_call
+    raise CommandInvokeError(self, e) from e
+discord.app_commands.errors.CommandInvokeError: Command 'join' raised an exception: NotFound: 404 Not Found (error code: 10062): Unknown interaction
+02:51:24 [jamie] ERROR: Failed to send error response
+Traceback (most recent call last):
+  File "c:\.A - Projects\Bots\Discord-Bots\Jamie\venv\Lib\site-packages\discord\app_commands\commands.py", line 858, in _do_call
+    return await self._callback(self.binding, interaction, **params)  # type: ignore
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "c:\.A - Projects\Bots\Discord-Bots\Jamie\cogs\music.py", line 63, in join_vc
+    await interaction.response.defer()
+  File "c:\.A - Projects\Bots\Discord-Bots\Jamie\venv\Lib\site-packages\discord\interactions.py", line 892, in defer
+    response = await adapter.create_interaction_response(
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    ...<6 lines>...
+    )
+    ^
+  File "c:\.A - Projects\Bots\Discord-Bots\Jamie\venv\Lib\site-packages\discord\webhook\async_.py", line 224, in request
+    raise NotFound(response, data)
+discord.errors.NotFound: 404 Not Found (error code: 10062): Unknown interaction
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "c:\.A - Projects\Bots\Discord-Bots\Jamie\venv\Lib\site-packages\discord\app_commands\tree.py", line 1302, in _call
+    await command._invoke_with_namespace(interaction, namespace)
+  File "c:\.A - Projects\Bots\Discord-Bots\Jamie\venv\Lib\site-packages\discord\app_commands\commands.py", line 884, in _invoke_with_namespace
+    return await self._do_call(interaction, transformed_values)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "c:\.A - Projects\Bots\Discord-Bots\Jamie\venv\Lib\site-packages\discord\app_commands\commands.py", line 877, in _do_call
+    raise CommandInvokeError(self, e) from e
+discord.app_commands.errors.CommandInvokeError: Command 'join' raised an exception: NotFound: 404 Not Found (error code: 10062): Unknown interaction
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "c:\.A - Projects\Bots\Discord-Bots\Jamie\main.py", line 131, in on_app_command_error
+    await interaction.response.send_message(msg, ephemeral=True)
+  File "c:\.A - Projects\Bots\Discord-Bots\Jamie\venv\Lib\site-packages\discord\interactions.py", line 1085, in send_message
+    data = await adapter.create_interaction_response(
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    ...<6 lines>...
+    )
+    ^
+  File "c:\.A - Projects\Bots\Discord-Bots\Jamie\venv\Lib\site-packages\discord\webhook\async_.py", line 224, in request
+    raise NotFound(response, data)
+discord.errors.NotFound: 404 Not Found (error code: 10062): Unknown interaction
+02:51:24 [jamie.music] ERROR: Failed to join voice channel
+Traceback (most recent call last):
+  File "c:\.A - Projects\Bots\Discord-Bots\Jamie\cogs\music.py", line 66, in join_vc
+    voice_client = await target_channel.connect()
+                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\ovjup\AppData\Roaming\Python\Python314\site-packages\discord\abc.py", line 2144, in connect
+    voice: T = cls(client, self)
+               ~~~^^^^^^^^^^^^^^
+  File "C:\Users\ovjup\AppData\Roaming\Python\Python314\site-packages\discord\voice_client.py", line 222, in __init__
+    raise RuntimeError('davey library needed in order to use voice')
+RuntimeError: davey library needed in order to use voice
+03:09:15 [jamie.memory] INFO: Running personality analysis cycle
+03:09:15 [jamie.memory] INFO: Running memory prune cycle
+03:13:31 [jamie] ERROR: Slash command error: Command 'join' raised an exception: NotFound: 404 Not Found (error code: 10062): Unknown interaction
+Traceback (most recent call last):
+  File "c:\.A - Projects\Bots\Discord-Bots\Jamie\venv\Lib\site-packages\discord\app_commands\commands.py", line 858, in _do_call
+    return await self._callback(self.binding, interaction, **params)  # type: ignore
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "c:\.A - Projects\Bots\Discord-Bots\Jamie\cogs\music.py", line 63, in join_vc
+    await interaction.response.defer()
+  File "c:\.A - Projects\Bots\Discord-Bots\Jamie\venv\Lib\site-packages\discord\interactions.py", line 892, in defer
+    response = await adapter.create_interaction_response(
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    ...<6 lines>...
+    )
+    ^
+  File "c:\.A - Projects\Bots\Discord-Bots\Jamie\venv\Lib\site-packages\discord\webhook\async_.py", line 224, in request
+    raise NotFound(response, data)
+discord.errors.NotFound: 404 Not Found (error code: 10062): Unknown interaction
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "c:\.A - Projects\Bots\Discord-Bots\Jamie\venv\Lib\site-packages\discord\app_commands\tree.py", line 1302, in _call
+    await command._invoke_with_namespace(interaction, namespace)
+  File "c:\.A - Projects\Bots\Discord-Bots\Jamie\venv\Lib\site-packages\discord\app_commands\commands.py", line 884, in _invoke_with_namespace
+    return await self._do_call(interaction, transformed_values)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "c:\.A - Projects\Bots\Discord-Bots\Jamie\venv\Lib\site-packages\discord\app_commands\commands.py", line 877, in _do_call
+    raise CommandInvokeError(self, e) from e
+discord.app_commands.errors.CommandInvokeError: Command 'join' raised an exception: NotFound: 404 Not Found (error code: 10062): Unknown interaction
+03:13:31 [jamie] ERROR: Failed to send error response
+Traceback (most recent call last):
+  File "c:\.A - Projects\Bots\Discord-Bots\Jamie\venv\Lib\site-packages\discord\app_commands\commands.py", line 858, in _do_call
+    return await self._callback(self.binding, interaction, **params)  # type: ignore
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "c:\.A - Projects\Bots\Discord-Bots\Jamie\cogs\music.py", line 63, in join_vc
+    await interaction.response.defer()
+  File "c:\.A - Projects\Bots\Discord-Bots\Jamie\venv\Lib\site-packages\discord\interactions.py", line 892, in defer
+    response = await adapter.create_interaction_response(
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    ...<6 lines>...
+    )
+    ^
+  File "c:\.A - Projects\Bots\Discord-Bots\Jamie\venv\Lib\site-packages\discord\webhook\async_.py", line 224, in request
+    raise NotFound(response, data)
+discord.errors.NotFound: 404 Not Found (error code: 10062): Unknown interaction
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "c:\.A - Projects\Bots\Discord-Bots\Jamie\venv\Lib\site-packages\discord\app_commands\tree.py", line 1302, in _call
+    await command._invoke_with_namespace(interaction, namespace)
+  File "c:\.A - Projects\Bots\Discord-Bots\Jamie\venv\Lib\site-packages\discord\app_commands\commands.py", line 884, in _invoke_with_namespace
+    return await self._do_call(interaction, transformed_values)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "c:\.A - Projects\Bots\Discord-Bots\Jamie\venv\Lib\site-packages\discord\app_commands\commands.py", line 877, in _do_call
+    raise CommandInvokeError(self, e) from e
+discord.app_commands.errors.CommandInvokeError: Command 'join' raised an exception: NotFound: 404 Not Found (error code: 10062): Unknown interaction
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "c:\.A - Projects\Bots\Discord-Bots\Jamie\main.py", line 131, in on_app_command_error
+    await interaction.response.send_message(msg, ephemeral=True)
+  File "c:\.A - Projects\Bots\Discord-Bots\Jamie\venv\Lib\site-packages\discord\interactions.py", line 1085, in send_message
+    data = await adapter.create_interaction_response(
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    ...<6 lines>...
+    )
+    ^
+  File "c:\.A - Projects\Bots\Discord-Bots\Jamie\venv\Lib\site-packages\discord\webhook\async_.py", line 224, in request
+    raise NotFound(response, data)
+discord.errors.NotFound: 404 Not Found (error code: 10062): Unknown interaction
+03:13:32 [jamie.music] ERROR: Failed to join voice channel
+Traceback (most recent call last):
+  File "c:\.A - Projects\Bots\Discord-Bots\Jamie\cogs\music.py", line 66, in join_vc
+    voice_client = await target_channel.connect()
+                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\ovjup\AppData\Roaming\Python\Python314\site-packages\discord\abc.py", line 2144, in connect
+    voice: T = cls(client, self)
+               ~~~^^^^^^^^^^^^^^
+  File "C:\Users\ovjup\AppData\Roaming\Python\Python314\site-packages\discord\voice_client.py", line 222, in __init__
+    raise RuntimeError('davey library needed in order to use voice')
+RuntimeError: davey library needed in order to use voice
+03:15:37 [discord.client] WARNING: PyNaCl is not installed, voice will NOT be supported
+03:15:37 [discord.client] INFO: logging in using static token
+03:15:38 [jamie] INFO: Database connected
+03:15:38 [jamie] INFO: LLM client started (model: qwen/qwen-2.5-72b-instruct)
+03:15:38 [jamie] INFO: Image generator started
+03:15:38 [jamie] INFO: Loaded cog: cogs.behavior
+03:15:38 [jamie] INFO: Loaded cog: cogs.chat
+03:15:38 [jamie] INFO: Loaded cog: cogs.counting
+03:15:38 [jamie] INFO: Loaded cog: cogs.economy
+03:15:38 [jamie] INFO: Loaded cog: cogs.events_extra
+03:15:38 [jamie] INFO: Loaded cog: cogs.format_utils
+03:15:38 [jamie] INFO: Loaded cog: cogs.image_cog
+03:15:38 [jamie] INFO: Loaded cog: cogs.info_cmds
+03:15:38 [jamie] INFO: Loaded cog: cogs.manage_cmds
+03:15:38 [jamie] INFO: Loaded cog: cogs.memory
+03:15:38 [jamie] INFO: Loaded cog: cogs.misc_cmds
+03:15:38 [jamie] INFO: Loaded cog: cogs.modlog_cmds
+03:15:38 [jamie] INFO: Loaded cog: cogs.mod_cmds
+03:15:38 [jamie] INFO: Loaded cog: cogs.music
+03:15:38 [jamie] INFO: Loaded cog: cogs.roles_cmds
+03:15:38 [jamie] INFO: Loaded cog: cogs.setup
+03:15:38 [jamie] INFO: Loaded cog: cogs.starboard
+03:15:38 [jamie] INFO: Loaded cog: cogs.utility
+03:15:38 [jamie] INFO: Loaded cog: cogs.welcome
+03:15:38 [jamie] INFO: Synced 36 global slash commands: ask, behavior-setup, bot, clear-persona, economy, generate, generate-persona, help, imagine, join, leave, manage, misc, mod, modlog, omnipresent, omnipresent-chance, pause, personas, play, playlist, profile, ranks, rant, remember, resume, servermap, setchannel, setup, skip, stats, stop, summon-tempo, switch-persona, talk, volume
+03:15:39 [discord.gateway] INFO: Shard ID None has connected to Gateway (Session ID: 2db2142ef12b8230920a130bc073de20).
+03:15:41 [jamie] INFO: ════════════════════════════════════════
+03:15:41 [jamie] INFO:   JAMIE IS ONLINE
+03:15:41 [jamie] INFO:   Guilds: 1
+03:15:41 [jamie] INFO:   Users:  336
+03:15:41 [jamie] INFO: ════════════════════════════════════════
+03:15:41 [jamie.memory] INFO: Running personality analysis cycle
+03:15:41 [jamie.memory] INFO: Running memory prune cycle
+03:15:41 [jamie] INFO: Cleared guild command copies for Certified (1139997451835674667)
+03:16:21 [jamie.music] ERROR: Failed to join voice channel
+Traceback (most recent call last):
+  File "c:\.A - Projects\Bots\Discord-Bots\Jamie\cogs\music.py", line 66, in join_vc
+    voice_client = await target_channel.connect()
+                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "c:\.A - Projects\Bots\Discord-Bots\Jamie\venv\Lib\site-packages\discord\abc.py", line 2144, in connect
+    voice: T = cls(client, self)
+               ~~~^^^^^^^^^^^^^^
+  File "c:\.A - Projects\Bots\Discord-Bots\Jamie\venv\Lib\site-packages\discord\voice_client.py", line 220, in __init__
+    raise RuntimeError('PyNaCl library needed in order to use voice')
+RuntimeError: PyNaCl library needed in order to use voice
+03:56:28 [discord.client] INFO: logging in using static token
+03:56:29 [jamie] INFO: Database connected
+03:56:29 [jamie] INFO: LLM client started (model: qwen/qwen-2.5-72b-instruct)
+03:56:29 [jamie] INFO: Image generator started
+03:56:29 [jamie] INFO: Loaded cog: cogs.behavior
+03:56:29 [jamie] INFO: Loaded cog: cogs.chat
+03:56:29 [jamie] INFO: Loaded cog: cogs.counting
+03:56:29 [jamie] INFO: Loaded cog: cogs.economy
+03:56:29 [jamie] INFO: Loaded cog: cogs.events_extra
+03:56:29 [jamie] INFO: Loaded cog: cogs.format_utils
+03:56:29 [jamie] INFO: Loaded cog: cogs.image_cog
+03:56:29 [jamie] INFO: Loaded cog: cogs.info_cmds
+03:56:29 [jamie] INFO: Loaded cog: cogs.manage_cmds
+03:56:29 [jamie] INFO: Loaded cog: cogs.memory
+03:56:29 [jamie] INFO: Loaded cog: cogs.misc_cmds
+03:56:29 [jamie] INFO: Loaded cog: cogs.modlog_cmds
+03:56:29 [jamie] INFO: Loaded cog: cogs.mod_cmds
+03:56:29 [jamie] INFO: Loaded cog: cogs.music
+03:56:29 [jamie] INFO: Loaded cog: cogs.roles_cmds
+03:56:29 [jamie] INFO: Loaded cog: cogs.setup
+03:56:29 [jamie] INFO: Loaded cog: cogs.starboard
+03:56:29 [jamie] INFO: Loaded cog: cogs.utility
+03:56:29 [jamie] INFO: Loaded cog: cogs.welcome
+03:56:29 [jamie] INFO: Synced 36 global slash commands: ask, behavior-setup, bot, clear-persona, economy, generate, generate-persona, help, imagine, join, leave, manage, misc, mod, modlog, omnipresent, omnipresent-chance, pause, personas, play, playlist, profile, ranks, rant, remember, resume, servermap, setchannel, setup, skip, stats, stop, summon-tempo, switch-persona, talk, volume
+03:56:30 [discord.gateway] INFO: Shard ID None has connected to Gateway (Session ID: 6a4cd2854bbdb5c18d9adb7d7c294d93).
+03:56:32 [jamie] INFO: ════════════════════════════════════════
+03:56:32 [jamie] INFO:   JAMIE IS ONLINE
+03:56:32 [jamie] INFO:   Guilds: 1
+03:56:32 [jamie] INFO:   Users:  336
+03:56:32 [jamie] INFO: ════════════════════════════════════════
+03:56:32 [jamie.memory] INFO: Running personality analysis cycle
+03:56:32 [jamie.memory] INFO: Running memory prune cycle
+03:56:32 [jamie] INFO: Cleared guild command copies for Certified (1139997451835674667)
+04:26:32 [jamie.memory] INFO: Running personality analysis cycle
+04:56:32 [jamie.memory] INFO: Running personality analysis cycle
+04:56:32 [jamie.memory] INFO: Running memory prune cycle
+05:26:32 [jamie.memory] INFO: Running personality analysis cycle
+05:37:53 [discord.gateway] INFO: Shard ID None has successfully RESUMED session 6a4cd2854bbdb5c18d9adb7d7c294d93.
+05:56:32 [jamie.memory] INFO: Running personality analysis cycle
+05:56:32 [jamie.memory] INFO: Running memory prune cycle
+06:26:32 [jamie.memory] INFO: Running personality analysis cycle
+06:56:32 [jamie.memory] INFO: Running memory prune cycle
+06:56:32 [jamie.memory] INFO: Running personality analysis cycle
+07:26:32 [jamie.memory] INFO: Running personality analysis cycle
+07:56:32 [jamie.memory] INFO: Running personality analysis cycle
+07:56:32 [jamie.memory] INFO: Running memory prune cycle
+08:26:32 [jamie.memory] INFO: Running personality analysis cycle
+08:44:18 [discord.client] INFO: logging in using static token
+08:44:19 [jamie] INFO: Database connected
+08:44:19 [jamie] INFO: LLM client started (model: qwen/qwen-2.5-72b-instruct)
+08:44:19 [jamie] INFO: Image generator started
+08:44:19 [jamie] INFO: Loaded cog: cogs.behavior
+08:44:19 [jamie] INFO: Loaded cog: cogs.chat
+08:44:19 [jamie] INFO: Loaded cog: cogs.counting
+08:44:19 [jamie] INFO: Loaded cog: cogs.economy
+08:44:19 [jamie] INFO: Loaded cog: cogs.events_extra
+08:44:19 [jamie] INFO: Loaded cog: cogs.format_utils
+08:44:19 [jamie] INFO: Loaded cog: cogs.image_cog
+08:44:19 [jamie] INFO: Loaded cog: cogs.info_cmds
+08:44:19 [jamie] INFO: Loaded cog: cogs.manage_cmds
+08:44:19 [jamie] INFO: Loaded cog: cogs.memory
+08:44:19 [jamie] INFO: Loaded cog: cogs.misc_cmds
+08:44:19 [jamie] INFO: Loaded cog: cogs.modlog_cmds
+08:44:19 [jamie] INFO: Loaded cog: cogs.mod_cmds
+08:44:19 [jamie] INFO: Loaded cog: cogs.music
+08:44:19 [jamie] INFO: Loaded cog: cogs.roles_cmds
+08:44:19 [jamie] INFO: Loaded cog: cogs.setup
+08:44:19 [jamie] INFO: Loaded cog: cogs.starboard
+08:44:19 [jamie] INFO: Loaded cog: cogs.utility
+08:44:19 [jamie] INFO: Loaded cog: cogs.welcome
+08:44:19 [jamie] INFO: Synced 36 global slash commands: ask, behavior-setup, bot, clear-persona, economy, generate, generate-persona, help, imagine, join, leave, manage, misc, mod, modlog, omnipresent, omnipresent-chance, pause, personas, play, playlist, profile, ranks, rant, remember, resume, servermap, setchannel, setup, skip, stats, stop, summon-tempo, switch-persona, talk, volume
+08:44:19 [discord.gateway] INFO: Shard ID None has connected to Gateway (Session ID: 391ded1564a37deadb5a8a38fa0be1bb).
+08:44:22 [jamie] INFO: ════════════════════════════════════════
+08:44:22 [jamie] INFO:   JAMIE IS ONLINE
+08:44:22 [jamie] INFO:   Guilds: 1
+08:44:22 [jamie] INFO:   Users:  336
+08:44:22 [jamie] INFO: ════════════════════════════════════════
+08:44:22 [jamie.memory] INFO: Running personality analysis cycle
+08:44:22 [jamie.memory] INFO: Running memory prune cycle
+08:44:22 [jamie] INFO: Cleared guild command copies for Certified (1139997451835674667)

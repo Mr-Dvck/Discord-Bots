@@ -66,7 +66,7 @@ class MusicCog(commands.Cog):
             voice_client = await target_channel.connect()
             self.voice_connections[interaction.guild.id] = voice_client
             # No message sent - Jamie joins silently
-            await interaction.followup.send("", ephemeral=True)
+            # Don't send any response to avoid "Cannot send an empty message" error
             
         except Exception as e:
             log.exception("Failed to join voice channel")
