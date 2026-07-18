@@ -60,17 +60,19 @@ class MusicCog(commands.Cog):
             )
             return
 
-        # Use defer_with_response to avoid "thinking" state
-        await interaction.response.defer(ephemeral=True)
-
+        # Join voice channel silently - no visible response to user
+        # The join happens in the background without any message
         try:
             voice_client = await target_channel.connect()
             self.voice_connections[interaction.guild.id] = voice_client
             # No message sent - Jamie joins silently
+            # Send a response that completes the interaction without showing anything visible
+            # Using a zero-width space character to avoid "Cannot send an empty message" error
+            await interaction.response.send_message(content="\u200b", ephemeral=True)
             
         except Exception as e:
             log.exception("Failed to join voice channel")
-            await interaction.followup.send(
+            await interaction.response.send_message(
                 f"Failed to join voice channel: {str(e)}",
                 ephemeral=True,
             )
