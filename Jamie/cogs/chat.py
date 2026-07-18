@@ -4,9 +4,11 @@ ChatCog — Handles Jamie's conversations.
 - @mention: Jamie responds when pinged in other channels
 - LLM-powered responses with user context and conversation memory
 - All talk output is sent as Discord embeds
+- Voice channel joining (minimal VC functionality)
 """
 
 import discord
+from discord import app_commands
 from discord.ext import commands
 import logging
 from datetime import datetime, timezone
@@ -24,6 +26,8 @@ class ChatCog(commands.Cog):
         self.bot = bot
         # Webhook cache: channel_id -> discord.Webhook (avoids re-fetching every message)
         self._webhook_cache: dict[int, discord.Webhook] = {}
+        # Voice connections: guild_id -> discord.VoiceClient
+        self.voice_connections: dict[int, discord.VoiceClient] = {}
 
     # ── on_message — route conversations ──────────────────────────
 
@@ -1216,6 +1220,84 @@ class ChatCog(commands.Cog):
                     avatar_url=char["avatar_url"],
                     content=response_text
                 )
+
+    # ── Voice Channel Commands ────────────────────────────────────────
+
+    @app_commands.command(name="join", description="Join a voice channel")
+    @app_commands.describe(channel="Voice channel to join")
+    async def join_vc(self, interaction: discord.Interaction, channel: discord.VoiceChannel):
+        """Join a voice channel."""
+        if interaction.user.voice is None and channel is None:
+            await interaction.response.send_message(
+                "You must be in a voice channel or specify one to join.",
+                ephemeral=True,
+            )
+            return
+
+        target_channel = channel or interaction.user.voice.channel
+        if not target_channel:
+            await interaction.response.send_message(
+                "Could not find a voice channel to join.",
+                ephemeral=True,
+            )
+            return
+
+        # Check if already connected to this guild
+        if interaction.guild.id in self.voice_connections:
+            await interaction.response.send_message(
+                "I'm already connected to a voice channel in this server.",
+                ephemeral=True,
+            )
+            return
+
+        # Check permissions - only require connect, not speak (Jamie can join to take up space)
+        permissions = target_channel.permissions_for(interaction.guild.me)
+        if not permissions.connect:
+            await interaction.response.send_message(
+                f"I don't have permission to connect to {target_channel.mention}.",
+                ephemeral=True,
+            )
+            return
+
+        # Join voice channel silently - no visible response to user
+        try:
+            voice_client = await target_channel.connect()
+            self.voice_connections[interaction.guild.id] = voice_client
+            # Send a response that completes the interaction without showing anything visible
+            await interaction.response.send_message(content="\u200b", ephemeral=True)
+
+        except Exception as e:
+            log.exception("Failed to join voice channel")
+            await interaction.response.send_message(
+                f"Failed to join voice channel: {str(e)}",
+                ephemeral=True,
+            )
+
+    @app_commands.command(name="leave", description="Leave the current voice channel")
+    async def leave_vc(self, interaction: discord.Interaction):
+        """Leave the current voice channel."""
+        if interaction.guild.id not in self.voice_connections:
+            await interaction.response.send_message(
+                "I'm not connected to a voice channel.",
+                ephemeral=True,
+            )
+            return
+
+        await interaction.response.defer()
+
+        try:
+            voice_client = self.voice_connections[interaction.guild.id]
+            await voice_client.disconnect()
+            del self.voice_connections[interaction.guild.id]
+
+            await interaction.followup.send("👋 Left voice channel")
+
+        except Exception as e:
+            log.exception("Failed to leave voice channel")
+            await interaction.followup.send(
+                f"Failed to leave voice channel: {str(e)}",
+                ephemeral=True,
+            )
 
 
 async def setup(bot: commands.Bot):
