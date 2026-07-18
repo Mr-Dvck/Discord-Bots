@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import discord
+from datetime import datetime, timezone
 from discord import app_commands
 from discord.ext import commands
 
@@ -86,7 +87,24 @@ class ModlogCog(commands.GroupCog, group_name="modlog"):
             return
         await interaction.response.send_message(embed=embed("🗑️ Warning", f"Deleted warning `#{warn_id}`."))
 
-
+    @app_commands.command(name="note", description="Add a staff note about a user (updates profile)")
+    @admin_check()
+    @app_commands.describe(user="The user to note", content="The note content")
+    async def note(self, interaction: discord.Interaction, user: discord.Member, content: str):
+        # Add the note to member_notes table
+        note_id = await self.bot.db.add_member_note(interaction.guild.id, user.id, interaction.user.id, content)
+        
+        # Also update the user's profile notes field
+        profile = await self.bot.db.get_user_profile(user.id, interaction.guild.id)
+        current_notes = profile.get("notes", "") if profile else ""
+        new_note_entry = f"[{datetime.now(timezone.utc).strftime('%Y-%m-%d %H:%M:%S')}] <@{interaction.user.id}>: {content}"
+        updated_notes = (current_notes + "\n" + new_note_entry) if current_notes else new_note_entry
+        await self.bot.db.update_user_notes(user.id, interaction.guild.id, updated_notes)
+        
+        await interaction.response.send_message(
+            embed=embed("📝 Note Added", f"Added note to {user.mention}:\n\n> {content[:1000]}"),
+            ephemeral=True,
+        )
 
     @app_commands.command(name="modstats", description="Get moderation statistics for a mod/admin")
     @admin_check()
