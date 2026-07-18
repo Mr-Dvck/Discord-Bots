@@ -20,22 +20,12 @@ const PACK_META: Record<
 > = {
   Core: {
     icon: "🔥",
-    blurb: "Setup, chat, images, memory",
+    blurb: "Chat, images, memory, voice",
     color: "var(--primary)",
-  },
-  Economy: {
-    icon: "💰",
-    blurb: "/economy daily · work · pay",
-    color: "var(--warn)",
-  },
-  "Bot Info": {
-    icon: "📡",
-    blurb: "/bot info · stats · uptime · ping",
-    color: "var(--accent)",
   },
   Manage: {
     icon: "🛠️",
-    blurb: "Roles, purge, modules, giveaways",
+    blurb: "Roles, purge, modules, server config",
     color: "var(--premium)",
   },
   Moderation: {
@@ -47,16 +37,6 @@ const PACK_META: Record<
     icon: "📋",
     blurb: "Cases, warnings, staff notes",
     color: "var(--warn)",
-  },
-  Ranks: {
-    icon: "🎭",
-    blurb: "Joinable ranks + role info",
-    color: "var(--primary)",
-  },
-  Misc: {
-    icon: "✨",
-    blurb: "AFK, whois, reminders, fun",
-    color: "var(--accent)",
   },
 };
 
