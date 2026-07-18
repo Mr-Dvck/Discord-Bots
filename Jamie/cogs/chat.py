@@ -108,7 +108,7 @@ class ChatCog(commands.Cog):
             "type": "function",
             "function": {
                 "name": "join_voice_channel",
-                "description": "Join a voice channel for music/voice activities.",
+                "description": "Join a voice channel for music/voice activities. Jamie will join to take up space in the channel (without speaking permission).",
                 "parameters": {
                     "type": "object",
                     "properties": {

@@ -51,11 +51,11 @@ class MusicCog(commands.Cog):
             )
             return
 
-        # Check permissions
+        # Check permissions - only require connect, not speak (Jamie can join to take up space)
         permissions = target_channel.permissions_for(interaction.guild.me)
-        if not permissions.connect or not permissions.speak:
+        if not permissions.connect:
             await interaction.response.send_message(
-                f"I don't have permission to connect or speak in {target_channel.mention}.",
+                f"I don't have permission to connect to {target_channel.mention}.",
                 ephemeral=True,
             )
             return
@@ -71,7 +71,8 @@ class MusicCog(commands.Cog):
                 description=f"Connected to {target_channel.mention}",
                 color=0x39B7C4,
             )
-            embed.set_footer(text="Use /summon-tempo to add a music bot")
+            footer_text = "Note: I will join to take up space (no speaking)"
+            embed.set_footer(text=footer_text)
             
             await interaction.followup.send(embed=embed)
             
