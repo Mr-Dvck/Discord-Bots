@@ -531,3 +531,78 @@ export function setGuildCommandsConfig(guildId: string, config: Record<string, b
     db.close();
   }
 }
+
+export interface CustomCharacter {
+  id: number;
+  guild_id: string;
+  name: string;
+  avatar_url: string;
+  system_prompt: string;
+  shortcut: string;
+  created_at: string;
+}
+
+export function getCustomCharacters(guildId: string): CustomCharacter[] {
+  const { db } = openDb();
+  try {
+    db.exec(`
+      CREATE TABLE IF NOT EXISTS custom_characters (
+        id            INTEGER PRIMARY KEY AUTOINCREMENT,
+        guild_id      INTEGER,
+        name          TEXT,
+        avatar_url    TEXT,
+        system_prompt TEXT,
+        shortcut      TEXT,
+        created_at    TEXT DEFAULT (datetime('now'))
+      );
+    `);
+    const rows = db
+      .prepare("SELECT * FROM custom_characters WHERE CAST(guild_id AS TEXT) = ? ORDER BY id DESC")
+      .all(String(guildId)) as unknown as CustomCharacter[];
+    return rows;
+  } finally {
+    db.close();
+  }
+}
+
+export function addCustomCharacter(
+  guildId: string,
+  name: string,
+  avatarUrl: string,
+  systemPrompt: string,
+  shortcut: string
+): boolean {
+  const { db } = openDb();
+  try {
+    db.exec(`
+      CREATE TABLE IF NOT EXISTS custom_characters (
+        id            INTEGER PRIMARY KEY AUTOINCREMENT,
+        guild_id      INTEGER,
+        name          TEXT,
+        avatar_url    TEXT,
+        system_prompt TEXT,
+        shortcut      TEXT,
+        created_at    TEXT DEFAULT (datetime('now'))
+      );
+    `);
+    db.prepare(`
+      INSERT INTO custom_characters (guild_id, name, avatar_url, system_prompt, shortcut)
+      VALUES (?, ?, ?, ?, ?)
+    `).run(String(guildId), name, avatarUrl, systemPrompt, shortcut);
+    return true;
+  } finally {
+    db.close();
+  }
+}
+
+export function deleteCustomCharacter(guildId: string, charId: number): boolean {
+  const { db } = openDb();
+  try {
+    const res = db
+      .prepare("DELETE FROM custom_characters WHERE id = ? AND CAST(guild_id AS TEXT) = ?")
+      .run(charId, String(guildId));
+    return res.changes > 0;
+  } finally {
+    db.close();
+  }
+}

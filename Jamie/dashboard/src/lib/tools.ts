@@ -128,7 +128,9 @@ export type ToolName =
   | "get_welcome_config"
   | "set_welcome_config"
   | "get_starboard_config"
-  | "set_starboard_config";
+  | "set_starboard_config"
+  | "join_voice_channel"
+  | "leave_voice_channel";
 
 export interface ToolCall {
   id: string;
@@ -569,6 +571,23 @@ export const DASHBOARD_TOOLS = [
       enabled: { type: "boolean" },
       channel_id: { type: "string", description: "Channel snowflake ID to post starboard embed logs, or null to clear" },
       min_stars: { type: "number", description: "Minimum star (⭐) reactions required to post, default 3" },
+    },
+    ["guild_id"]
+  ),
+  tool(
+    "join_voice_channel",
+    "Join a voice channel with the bot.",
+    {
+      guild_id: { type: "string" },
+      channel_id: { type: "string" },
+    },
+    ["guild_id", "channel_id"]
+  ),
+  tool(
+    "leave_voice_channel",
+    "Leave the current voice channel in a server.",
+    {
+      guild_id: { type: "string" },
     },
     ["guild_id"]
   ),
@@ -1365,6 +1384,27 @@ export async function executeTool(
         if (typeof args.min_stars === "number") patch.min_stars = args.min_stars;
         const config = setStarboardConfig(guildId, patch);
         return { ok: true, result: config };
+      }
+
+      case "join_voice_channel": {
+        const guildId = str(args.guild_id);
+        const channelId = str(args.channel_id);
+        if (!guildId || !channelId) {
+          return { ok: false, error: "guild_id and channel_id required" };
+        }
+        // Use discord_request to join voice channel via Discord API
+        const result = await discordRequest("POST", `/guilds/${guildId}/voice-states/@me`, {
+          channel_id: channelId,
+        });
+        return { ok: true, result: { joined: channelId, guild_id: guildId } };
+      }
+
+      case "leave_voice_channel": {
+        const guildId = str(args.guild_id);
+        if (!guildId) return { ok: false, error: "guild_id required" };
+        // Use discord_request to leave voice channel via Discord API
+        const result = await discordRequest("DELETE", `/guilds/${guildId}/voice-states/@me`);
+        return { ok: true, result: { left: guildId } };
       }
 
       default:

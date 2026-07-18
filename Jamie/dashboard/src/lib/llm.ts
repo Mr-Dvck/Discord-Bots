@@ -49,6 +49,7 @@ Special helpers:
 - generate_blueprint + build_server: full layouts.
 - get_welcome_config / set_welcome_config: get or update welcome message settings.
 - get_starboard_config / set_starboard_config: get or update starboard reactions settings.
+- join_voice_channel / leave_voice_channel: control Jamie's voice channel presence. Use list_channels to find voice channel IDs (type 2).
 
 **SERVER NAMING (YOU AND THE DISCORD BOT BOTH KNOW THIS):**
 - Category (section) and channel names use **Modern Bold Unicode** (Mathematical Sans-Serif Bold).
