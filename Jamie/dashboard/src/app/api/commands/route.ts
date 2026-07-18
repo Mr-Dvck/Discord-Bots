@@ -1,5 +1,13 @@
 import { NextResponse } from "next/server";
-import { getGuildCommandsConfig, setGuildCommandsConfig } from "@/lib/jamie-db";
+
+// Dynamic import to avoid Turbopack resolution issues
+async function getDbFunctions() {
+  const module = await import("@/lib/jamie-db");
+  return {
+    getGuildCommandsConfig: module.getGuildCommandsConfig,
+    setGuildCommandsConfig: module.setGuildCommandsConfig
+  };
+}
 
 // Fallback implementations in case exports fail
 function fallbackGetConfig(guildId: string): Record<string, boolean> {
@@ -16,7 +24,15 @@ export async function GET(req: Request) {
     if (!guildId) {
       return NextResponse.json({ error: "guildId required" }, { status: 400 });
     }
-    const config = getGuildCommandsConfig ? getGuildCommandsConfig(guildId) : fallbackGetConfig(guildId);
+    
+    let config: Record<string, boolean> = {};
+    try {
+      const { getGuildCommandsConfig } = await getDbFunctions();
+      config = getGuildCommandsConfig(guildId);
+    } catch {
+      config = fallbackGetConfig(guildId);
+    }
+    
     return NextResponse.json({ config });
   } catch (e: unknown) {
     const message = e instanceof Error ? e.message : String(e);
@@ -36,7 +52,14 @@ export async function PUT(req: Request) {
       return NextResponse.json({ error: "config object required" }, { status: 400 });
     }
 
-    const nextConfig = setGuildCommandsConfig ? setGuildCommandsConfig(guildId, config) : fallbackSetConfig(guildId, config);
+    let nextConfig: Record<string, boolean> = {};
+    try {
+      const { setGuildCommandsConfig } = await getDbFunctions();
+      nextConfig = setGuildCommandsConfig(guildId, config);
+    } catch {
+      nextConfig = fallbackSetConfig(guildId, config);
+    }
+    
     return NextResponse.json({ config: nextConfig, ok: true });
   } catch (e: unknown) {
     const message = e instanceof Error ? e.message : String(e);
