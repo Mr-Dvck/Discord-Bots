@@ -658,3 +658,72 @@ ValueError: invalid literal for int() with base 10: 'Logs'
 17:47:50 [jamie.memory] INFO: Running memory prune cycle
 17:47:50 [jamie] INFO: Cleared guild command copies for Certified (1139997451835674667)
 18:17:50 [jamie.memory] INFO: Running personality analysis cycle
+02:09:12 [discord.client] WARNING: davey is not installed, voice will NOT be supported
+02:09:12 [discord.client] INFO: logging in using static token
+02:09:12 [jamie] INFO: Database connected
+02:09:12 [jamie] INFO: LLM client started (model: qwen/qwen-2.5-72b-instruct)
+02:09:12 [jamie] INFO: Image generator started
+02:09:12 [jamie] INFO: Loaded cog: cogs.behavior
+02:09:12 [jamie] INFO: Loaded cog: cogs.chat
+02:09:12 [jamie] INFO: Loaded cog: cogs.counting
+02:09:12 [jamie] INFO: Loaded cog: cogs.economy
+02:09:12 [jamie] INFO: Loaded cog: cogs.events_extra
+02:09:12 [jamie] INFO: Loaded cog: cogs.format_utils
+02:09:12 [jamie] INFO: Loaded cog: cogs.image_cog
+02:09:12 [jamie] INFO: Loaded cog: cogs.info_cmds
+02:09:12 [jamie] INFO: Loaded cog: cogs.manage_cmds
+02:09:12 [jamie] INFO: Loaded cog: cogs.memory
+02:09:12 [jamie] INFO: Loaded cog: cogs.misc_cmds
+02:09:12 [jamie] INFO: Loaded cog: cogs.modlog_cmds
+02:09:12 [jamie] INFO: Loaded cog: cogs.mod_cmds
+02:09:12 [jamie] INFO: Loaded cog: cogs.music
+02:09:12 [jamie] INFO: Loaded cog: cogs.roles_cmds
+02:09:12 [jamie] INFO: Loaded cog: cogs.setup
+02:09:12 [jamie] INFO: Loaded cog: cogs.starboard
+02:09:12 [jamie] INFO: Loaded cog: cogs.utility
+02:09:12 [jamie] INFO: Loaded cog: cogs.welcome
+02:09:13 [jamie] INFO: Synced 36 global slash commands: ask, behavior-setup, bot, clear-persona, economy, generate, generate-persona, help, imagine, join, leave, manage, misc, mod, modlog, omnipresent, omnipresent-chance, pause, personas, play, playlist, profile, ranks, rant, remember, resume, servermap, setchannel, setup, skip, stats, stop, summon-tempo, switch-persona, talk, volume
+02:09:13 [discord.gateway] INFO: Shard ID None has connected to Gateway (Session ID: e950eb52a6cac58115e33fc14afbd90a).
+02:09:15 [jamie] INFO: ════════════════════════════════════════
+02:09:15 [jamie] INFO:   JAMIE IS ONLINE
+02:09:15 [jamie] INFO:   Guilds: 1
+02:09:15 [jamie] INFO:   Users:  336
+02:09:15 [jamie] INFO: ════════════════════════════════════════
+02:09:15 [jamie.memory] INFO: Running personality analysis cycle
+02:09:15 [jamie.memory] INFO: Running memory prune cycle
+02:09:16 [jamie] INFO: Cleared guild command copies for Certified (1139997451835674667)
+02:12:55 [jamie.llm] ERROR: LLM API error 400: {"error":{"message":"Provider returned error","code":400,"metadata":{"raw":"{\"code\":400,\"reason\":\"INVALID_REQUEST_BODY\",\"message\":\"model: qwen/qwen-2.5-72b-instruct does not support endpoint: completions\",\"metadata\":{}}","provider_name":"Novita","is_byok":false,"previous_errors":[{"code"
+02:12:55 [jamie.llm] ERROR: LLM request failed: LLM API error: 400
+02:12:55 [jamie.chat] ERROR: Agent loop failed
+Traceback (most recent call last):
+  File "c:\.A - Projects\Bots\Discord-Bots\Jamie\cogs\chat.py", line 845, in _respond_with_agent
+    choice = await llm.chat_with_tools(thread, tools=self.BOT_TOOLS if is_owner else None)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "c:\.A - Projects\Bots\Discord-Bots\Jamie\llm\client.py", line 126, in chat_with_tools
+    raise e
+  File "c:\.A - Projects\Bots\Discord-Bots\Jamie\llm\client.py", line 121, in chat_with_tools
+    raise Exception(f"LLM API error: {resp.status}")
+Exception: LLM API error: 400
+02:28:38 [jamie.music] ERROR: Failed to join voice channel
+Traceback (most recent call last):
+  File "c:\.A - Projects\Bots\Discord-Bots\Jamie\cogs\music.py", line 66, in join_vc
+    voice_client = await target_channel.connect()
+                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\ovjup\AppData\Roaming\Python\Python314\site-packages\discord\abc.py", line 2144, in connect
+    voice: T = cls(client, self)
+               ~~~^^^^^^^^^^^^^^
+  File "C:\Users\ovjup\AppData\Roaming\Python\Python314\site-packages\discord\voice_client.py", line 222, in __init__
+    raise RuntimeError('davey library needed in order to use voice')
+RuntimeError: davey library needed in order to use voice
+02:37:45 [jamie.music] ERROR: Failed to join voice channel
+Traceback (most recent call last):
+  File "c:\.A - Projects\Bots\Discord-Bots\Jamie\cogs\music.py", line 66, in join_vc
+    voice_client = await target_channel.connect()
+                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\ovjup\AppData\Roaming\Python\Python314\site-packages\discord\abc.py", line 2144, in connect
+    voice: T = cls(client, self)
+               ~~~^^^^^^^^^^^^^^
+  File "C:\Users\ovjup\AppData\Roaming\Python\Python314\site-packages\discord\voice_client.py", line 222, in __init__
+    raise RuntimeError('davey library needed in order to use voice')
+RuntimeError: davey library needed in order to use voice
+02:39:15 [jamie.memory] INFO: Running personality analysis cycle
