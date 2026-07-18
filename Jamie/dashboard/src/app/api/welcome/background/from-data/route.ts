@@ -30,9 +30,9 @@ export async function POST(req: Request) {
     }
 
     const dir = welcomeBgDir();
-    fs.mkdirSync(dir, { recursive: true });
-    const filePath = path.join(dir, `${guildId}.png`);
-    fs.writeFileSync(filePath, buf);
+    /*turbopackIgnore: true*/ fs.mkdirSync(dir, { recursive: true });
+    const filePath = /*turbopackIgnore: true*/ path.join(dir, `${guildId}.png`);
+    /*turbopackIgnore: true*/ fs.writeFileSync(filePath, buf);
 
     const config = setWelcomeConfig(guildId, { background_path: filePath });
 

@@ -35,15 +35,15 @@ export type MemoryMessage = {
 function resolveDbPath(): string {
   const candidates = [
     process.env.JAMIE_DB_PATH,
-    path.join(process.cwd(), "..", "data", "jamie.db"),
-    path.join(process.cwd(), "data", "jamie.db"),
-    path.join(process.cwd(), "..", "..", "data", "jamie.db"),
+    /*turbopackIgnore: true*/ path.join(process.cwd(), "..", "data", "jamie.db"),
+    /*turbopackIgnore: true*/ path.join(process.cwd(), "data", "jamie.db"),
+    /*turbopackIgnore: true*/ path.join(process.cwd(), "..", "..", "data", "jamie.db"),
   ].filter(Boolean) as string[];
 
   for (const p of candidates) {
-    if (fs.existsSync(p)) return p;
+    if (/*turbopackIgnore: true*/ fs.existsSync(p)) return p;
   }
-  return candidates[0] || path.join(process.cwd(), "..", "data", "jamie.db");
+  return candidates[0] || /*turbopackIgnore: true*/ path.join(process.cwd(), "..", "data", "jamie.db");
 }
 
 type Stmt = {
@@ -65,9 +65,9 @@ function openDb(opts?: { mustExist?: boolean }) {
   };
 
   const dbPath = resolveDbPath();
-  if (!fs.existsSync(dbPath)) {
+  if (/*turbopackIgnore: true*/ fs.existsSync(dbPath)) {
     if (opts?.mustExist === false) {
-      fs.mkdirSync(path.dirname(dbPath), { recursive: true });
+      /*turbopackIgnore: true*/ fs.mkdirSync(/*turbopackIgnore: true*/ path.dirname(dbPath), { recursive: true });
     } else {
       throw new Error(
         `Jamie database not found at ${dbPath}. Run the Discord bot first so data/jamie.db exists.`
@@ -210,7 +210,7 @@ export function setWelcomeConfig(
 }
 
 export function welcomeBgDir(): string {
-  return path.join(path.dirname(resolveDbPath()), "welcome_bgs");
+  return /*turbopackIgnore: true*/ path.join(/*turbopackIgnore: true*/ path.dirname(resolveDbPath()), "welcome_bgs");
 }
 
 export type StarboardConfig = {

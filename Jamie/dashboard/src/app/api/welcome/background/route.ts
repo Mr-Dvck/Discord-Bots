@@ -31,9 +31,9 @@ export async function POST(req: Request) {
     });
 
     const dir = welcomeBgDir();
-    fs.mkdirSync(dir, { recursive: true });
-    const filePath = path.join(dir, `${guildId}.png`);
-    fs.writeFileSync(filePath, Buffer.from(result.base64, "base64"));
+    /*turbopackIgnore: true*/ fs.mkdirSync(dir, { recursive: true });
+    const filePath = /*turbopackIgnore: true*/ path.join(dir, `${guildId}.png`);
+    /*turbopackIgnore: true*/ fs.writeFileSync(filePath, Buffer.from(result.base64, "base64"));
 
     const config = setWelcomeConfig(guildId, { background_path: filePath });
 
