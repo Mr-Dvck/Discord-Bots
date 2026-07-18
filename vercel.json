@@ -1,0 +1,6 @@
+{
+  "buildCommand": "cd Jamie/dashboard && rm -rf .next && npm install && npm run build",
+  "installCommand": "cd Jamie/dashboard && npm install",
+  "outputDirectory": "Jamie/dashboard/.next",
+  "framework": "nextjs"
+}
