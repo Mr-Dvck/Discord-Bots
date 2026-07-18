@@ -1,7 +1,0 @@
-"Command","Description"
-"addrank","Add a new rank for members to join (role must exist)"
-"rank","Join/leave a rank"
-"ranks","Get a list of joinable ranks"
-"roles","Get a list of server roles"
-"roleinfo","Get information about a role"
-"delrank","Delete an existing rank (does not delete the role)"

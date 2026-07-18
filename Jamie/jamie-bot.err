@@ -1069,3 +1069,82 @@ Traceback (most recent call last):
   File "c:\.A - Projects\Bots\Discord-Bots\Jamie\venv\Lib\site-packages\discord\webhook\async_.py", line 226, in request
     raise HTTPException(response, data)
 discord.errors.HTTPException: 400 Bad Request (error code: 50006): Cannot send an empty message
+08:49:15 [discord.client] INFO: logging in using static token
+08:49:15 [jamie] INFO: Database connected
+08:49:15 [jamie] INFO: LLM client started (model: qwen/qwen-2.5-72b-instruct)
+08:49:15 [jamie] INFO: Image generator started
+08:49:15 [jamie] INFO: Loaded cog: cogs.behavior
+08:49:15 [jamie] INFO: Loaded cog: cogs.chat
+08:49:15 [jamie] INFO: Loaded cog: cogs.counting
+08:49:15 [jamie] INFO: Loaded cog: cogs.economy
+08:49:15 [jamie] INFO: Loaded cog: cogs.events_extra
+08:49:15 [jamie] INFO: Loaded cog: cogs.format_utils
+08:49:15 [jamie] INFO: Loaded cog: cogs.image_cog
+08:49:15 [jamie] INFO: Loaded cog: cogs.info_cmds
+08:49:15 [jamie] INFO: Loaded cog: cogs.manage_cmds
+08:49:15 [jamie] INFO: Loaded cog: cogs.memory
+08:49:15 [jamie] INFO: Loaded cog: cogs.misc_cmds
+08:49:15 [jamie] INFO: Loaded cog: cogs.modlog_cmds
+08:49:15 [jamie] INFO: Loaded cog: cogs.mod_cmds
+08:49:15 [jamie] INFO: Loaded cog: cogs.music
+08:49:15 [jamie] INFO: Loaded cog: cogs.roles_cmds
+08:49:15 [jamie] INFO: Loaded cog: cogs.setup
+08:49:15 [jamie] INFO: Loaded cog: cogs.starboard
+08:49:15 [jamie] INFO: Loaded cog: cogs.utility
+08:49:15 [jamie] INFO: Loaded cog: cogs.welcome
+08:49:16 [jamie] INFO: Synced 36 global slash commands: ask, behavior-setup, bot, clear-persona, economy, generate, generate-persona, help, imagine, join, leave, manage, misc, mod, modlog, omnipresent, omnipresent-chance, pause, personas, play, playlist, profile, ranks, rant, remember, resume, servermap, setchannel, setup, skip, stats, stop, summon-tempo, switch-persona, talk, volume
+08:49:18 [discord.gateway] INFO: Shard ID None has connected to Gateway (Session ID: efcc49cd23286e3f614669ae50a50971).
+08:49:20 [jamie] INFO: ════════════════════════════════════════
+08:49:20 [jamie] INFO:   JAMIE IS ONLINE
+08:49:20 [jamie] INFO:   Guilds: 1
+08:49:20 [jamie] INFO:   Users:  336
+08:49:20 [jamie] INFO: ════════════════════════════════════════
+08:49:20 [jamie.memory] INFO: Running personality analysis cycle
+08:49:20 [jamie.memory] INFO: Running memory prune cycle
+08:49:20 [jamie] INFO: Cleared guild command copies for Certified (1139997451835674667)
+08:49:58 [discord.voice_state] INFO: Connecting to voice...
+08:49:58 [discord.voice_state] INFO: Starting voice handshake... (connection attempt 1)
+08:49:58 [discord.voice_state] INFO: Voice handshake complete. Endpoint found: c-atl12-05121a79.discord.media:2083
+08:49:58 [discord.voice_state] INFO: Voice connection complete.
+09:05:42 [discord.voice_state] INFO: The voice handshake is being terminated for Channel ID 1526807732924059658 (Guild ID 1139997451835674667)
+09:06:01 [discord.client] INFO: logging in using static token
+09:06:02 [jamie] INFO: Database connected
+09:06:02 [jamie] INFO: LLM client started (model: qwen/qwen-2.5-72b-instruct)
+09:06:02 [jamie] INFO: Image generator started
+09:06:02 [jamie] INFO: Loaded cog: cogs.behavior
+09:06:02 [jamie] INFO: Loaded cog: cogs.chat
+09:06:02 [jamie] INFO: Loaded cog: cogs.counting
+09:06:02 [jamie] INFO: Loaded cog: cogs.economy
+09:06:02 [jamie] INFO: Loaded cog: cogs.events_extra
+09:06:02 [jamie] INFO: Loaded cog: cogs.format_utils
+09:06:02 [jamie] INFO: Loaded cog: cogs.image_cog
+09:06:02 [jamie] INFO: Loaded cog: cogs.info_cmds
+09:06:02 [jamie] INFO: Loaded cog: cogs.manage_cmds
+09:06:02 [jamie] INFO: Loaded cog: cogs.memory
+09:06:02 [jamie] INFO: Loaded cog: cogs.misc_cmds
+09:06:02 [jamie] INFO: Loaded cog: cogs.modlog_cmds
+09:06:02 [jamie] INFO: Loaded cog: cogs.mod_cmds
+09:06:02 [jamie] INFO: Loaded cog: cogs.music
+09:06:02 [jamie] INFO: Loaded cog: cogs.roles_cmds
+09:06:02 [jamie] INFO: Loaded cog: cogs.setup
+09:06:02 [jamie] INFO: Loaded cog: cogs.starboard
+09:06:02 [jamie] INFO: Loaded cog: cogs.utility
+09:06:02 [jamie] INFO: Loaded cog: cogs.welcome
+09:06:02 [jamie] INFO: Synced 36 global slash commands: ask, behavior-setup, bot, clear-persona, economy, generate, generate-persona, help, imagine, join, leave, manage, misc, mod, modlog, omnipresent, omnipresent-chance, pause, personas, play, playlist, profile, ranks, rant, remember, resume, servermap, setchannel, setup, skip, stats, stop, summon-tempo, switch-persona, talk, volume
+09:06:03 [discord.gateway] INFO: Shard ID None has connected to Gateway (Session ID: fa805773df47b0affd1b6ec6eb5d00b4).
+09:06:05 [jamie] INFO: ════════════════════════════════════════
+09:06:05 [jamie] INFO:   JAMIE IS ONLINE
+09:06:05 [jamie] INFO:   Guilds: 1
+09:06:05 [jamie] INFO:   Users:  336
+09:06:05 [jamie] INFO: ════════════════════════════════════════
+09:06:05 [jamie.memory] INFO: Running personality analysis cycle
+09:06:05 [jamie.memory] INFO: Running memory prune cycle
+09:06:05 [jamie] INFO: Cleared guild command copies for Certified (1139997451835674667)
+09:06:43 [discord.voice_state] INFO: Connecting to voice...
+09:06:43 [discord.voice_state] INFO: Starting voice handshake... (connection attempt 1)
+09:06:43 [discord.voice_state] INFO: Voice handshake complete. Endpoint found: c-atl12-05121a79.discord.media:2083
+09:06:43 [discord.voice_state] INFO: Voice connection complete.
+09:36:05 [jamie.memory] INFO: Running personality analysis cycle
+10:06:05 [jamie.memory] INFO: Running personality analysis cycle
+10:06:05 [jamie.memory] INFO: Running memory prune cycle
+10:36:05 [jamie.memory] INFO: Running personality analysis cycle
