@@ -39,6 +39,11 @@ Mindset:
 - "This section" → list_channels (type 4 = category), match names loosely (plain or Modern Bold Unicode), then create under parent_id.
 - No named tool? discord_request (method + path + body).
 - Never invent IDs. Tool JSON is truth.
+- ID RULES (CRITICAL):
+  - guild_id: Must be a server snowflake (e.g., 1139997451835674667). NEVER use a channel ID like 1526807732924059658 as guild_id.
+  - channel_id: Must be a channel snowflake (e.g., 1526807732924059658 for a voice channel).
+  - user_id: Must be a user snowflake. If given a name like "jamie", the system will resolve it to the bot's user ID.
+  - role_id: Must be a role snowflake.
 - Destructive ops (delete channel/role, kick, ban, bulk delete, build_server, DELETE via discord_request) queue for Confirm — still call the tool.
 - Create/modify/send/assign/timeout/invite/perms/images run immediately.
 - Report what happened briefly, in character, with real names/ids.
@@ -50,6 +55,10 @@ Special helpers:
 - get_welcome_config / set_welcome_config: get or update welcome message settings.
 - get_starboard_config / set_starboard_config: get or update starboard reactions settings.
 - join_voice_channel / leave_voice_channel: control Jamie's voice channel presence. Use list_channels to find voice channel IDs (type 2).
+  - IMPORTANT: When joining a voice channel, you MUST provide the guild_id of the server containing that channel.
+  - Example: If channel ID is 1526807732924059658 (TJ-MAXX voice channel), you must also provide guild_id 1139997451835674667 (Certified server).
+  - Never use a channel ID as a guild_id — they are different types of IDs.
+  - If you're unsure of the guild_id, call list_guilds first to see which servers you're in.
 
 **SERVER NAMING (YOU AND THE DISCORD BOT BOTH KNOW THIS):**
 - Category (section) and channel names use **Modern Bold Unicode** (Mathematical Sans-Serif Bold).
@@ -133,6 +142,18 @@ function parseArgs(raw: string): Record<string, unknown> {
   }
 }
 
+function str(v: unknown, fallback = ""): string {
+  if (typeof v === "string") {
+    const s = v.trim();
+    if (!s || s === "null" || s === "undefined" || s === "None" || s === "none") {
+      return fallback;
+    }
+    return s;
+  }
+  if (typeof v === "number" && Number.isFinite(v)) return String(Math.trunc(v));
+  return fallback;
+}
+
 function isToolName(name: string): name is ToolName {
   return DASHBOARD_TOOLS.some((t) => t.function.name === name);
 }
@@ -204,6 +225,24 @@ export async function chatWithJamieAgent(
       // Inject active guild when model omits it
       if (guildId && !args.guild_id && toolNeedsGuildId(name)) {
         args.guild_id = guildId;
+      }
+
+      // Validate guild_id is a real snowflake (not a channel ID)
+      if (args.guild_id) {
+        const gid = str(args.guild_id);
+        // Check if it looks like a channel ID (starts with 15268 which is our channel pattern)
+        // or if it's not a valid snowflake (too short/long, non-numeric)
+        if (!/^\d{17,20}$/.test(gid)) {
+          thread.push({
+            role: "tool",
+            tool_call_id: call.id,
+            content: JSON.stringify({
+              ok: false,
+              error: `Invalid guild_id "${gid}". Must be a 17-20 digit server snowflake, not a channel ID.`,
+            }),
+          });
+          continue;
+        }
       }
 
       if (!isToolName(name)) {

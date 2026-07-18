@@ -32,6 +32,7 @@ import {
   deleteChannelPermission,
   discordRequest,
   buildServer,
+  getBotUser,
   type ServerBlueprint,
 } from "@/lib/discord";
 import {
@@ -614,6 +615,48 @@ function snowflake(v: unknown): string {
   return s;
 }
 
+/**
+ * Resolve a user ID from a name or snowflake.
+ * If input is a snowflake, returns it directly.
+ * If input is a name, searches members and returns the first match's ID.
+ * Special case: "jamie" or "jamie bot" resolves to the bot's own user ID.
+ */
+async function resolveUserId(guildId: string, userId: string): Promise<string | null> {
+  // First check if it's already a valid snowflake
+  const sf = snowflake(userId);
+  if (sf) return sf;
+
+  // Try to resolve as bot name
+  const lower = userId.toLowerCase().trim();
+  if (lower === "jamie" || lower === "jamie bot" || lower === "the bot") {
+    try {
+      const bot = await getBotUser();
+      return bot.id;
+    } catch {
+      // Fallback to snowflake check below
+    }
+  }
+
+  // Search members by username or display_name
+  try {
+    const members = await getGuildMembers(guildId, 1000);
+    if (Array.isArray(members)) {
+      for (const m of members) {
+        const user = m.user || {};
+        const username = String(user.username || "").toLowerCase();
+        const displayName = String(user.display_name || "").toLowerCase();
+        if (username === lower || displayName === lower) {
+          return String(user.id);
+        }
+      }
+    }
+  } catch {
+    // Ignore member fetch errors
+  }
+
+  return null;
+}
+
 function bool(v: unknown, fallback = false): boolean {
   return typeof v === "boolean" ? v : fallback;
 }
@@ -970,10 +1013,15 @@ export async function executeTool(
 
       case "assign_role": {
         const guildId = str(args.guild_id);
-        const userId = str(args.user_id);
+        const userIdInput = str(args.user_id);
         const roleId = str(args.role_id);
-        if (!guildId || !userId || !roleId) {
+        if (!guildId || !userIdInput || !roleId) {
           return { ok: false, error: "guild_id, user_id, role_id required" };
+        }
+        // Resolve user ID (handles names like "jamie" -> bot ID)
+        const userId = await resolveUserId(guildId, userIdInput);
+        if (!userId) {
+          return { ok: false, error: `Could not resolve user ID from "${userIdInput}"` };
         }
         await addRoleToMember(guildId, userId, roleId);
         return { ok: true, result: { guild_id: guildId, user_id: userId, role_id: roleId } };
@@ -981,10 +1029,15 @@ export async function executeTool(
 
       case "remove_role": {
         const guildId = str(args.guild_id);
-        const userId = str(args.user_id);
+        const userIdInput = str(args.user_id);
         const roleId = str(args.role_id);
-        if (!guildId || !userId || !roleId) {
+        if (!guildId || !userIdInput || !roleId) {
           return { ok: false, error: "guild_id, user_id, role_id required" };
+        }
+        // Resolve user ID (handles names like "jamie" -> bot ID)
+        const userId = await resolveUserId(guildId, userIdInput);
+        if (!userId) {
+          return { ok: false, error: `Could not resolve user ID from "${userIdInput}"` };
         }
         await removeRoleFromMember(guildId, userId, roleId);
         return { ok: true, result: { guild_id: guildId, user_id: userId, role_id: roleId } };
@@ -992,8 +1045,13 @@ export async function executeTool(
 
       case "set_nickname": {
         const guildId = str(args.guild_id);
-        const userId = str(args.user_id);
-        if (!guildId || !userId) return { ok: false, error: "guild_id and user_id required" };
+        const userIdInput = str(args.user_id);
+        if (!guildId || !userIdInput) return { ok: false, error: "guild_id and user_id required" };
+        // Resolve user ID (handles names like "jamie" -> bot ID)
+        const userId = await resolveUserId(guildId, userIdInput);
+        if (!userId) {
+          return { ok: false, error: `Could not resolve user ID from "${userIdInput}"` };
+        }
         const nick = str(args.nick);
         await modifyMember(guildId, userId, { nick: nick || null });
         return { ok: true, result: { user_id: userId, nick: nick || null } };
@@ -1001,8 +1059,13 @@ export async function executeTool(
 
       case "timeout_member": {
         const guildId = str(args.guild_id);
-        const userId = str(args.user_id);
-        if (!guildId || !userId) return { ok: false, error: "guild_id and user_id required" };
+        const userIdInput = str(args.user_id);
+        if (!guildId || !userIdInput) return { ok: false, error: "guild_id and user_id required" };
+        // Resolve user ID (handles names like "jamie" -> bot ID)
+        const userId = await resolveUserId(guildId, userIdInput);
+        if (!userId) {
+          return { ok: false, error: `Could not resolve user ID from "${userIdInput}"` };
+        }
         let mins = Math.floor(num(args.duration_minutes, 0));
         if (mins < 0) mins = 0;
         if (mins > 40320) mins = 40320;
@@ -1018,16 +1081,26 @@ export async function executeTool(
 
       case "kick_member": {
         const guildId = str(args.guild_id);
-        const userId = str(args.user_id);
-        if (!guildId || !userId) return { ok: false, error: "guild_id and user_id required" };
+        const userIdInput = str(args.user_id);
+        if (!guildId || !userIdInput) return { ok: false, error: "guild_id and user_id required" };
+        // Resolve user ID (handles names like "jamie" -> bot ID)
+        const userId = await resolveUserId(guildId, userIdInput);
+        if (!userId) {
+          return { ok: false, error: `Could not resolve user ID from "${userIdInput}"` };
+        }
         await kickMember(guildId, userId, str(args.reason) || undefined);
         return { ok: true, result: { kicked: userId } };
       }
 
       case "ban_member": {
         const guildId = str(args.guild_id);
-        const userId = str(args.user_id);
-        if (!guildId || !userId) return { ok: false, error: "guild_id and user_id required" };
+        const userIdInput = str(args.user_id);
+        if (!guildId || !userIdInput) return { ok: false, error: "guild_id and user_id required" };
+        // Resolve user ID (handles names like "jamie" -> bot ID)
+        const userId = await resolveUserId(guildId, userIdInput);
+        if (!userId) {
+          return { ok: false, error: `Could not resolve user ID from "${userIdInput}"` };
+        }
         let del = Math.floor(num(args.delete_message_seconds, 0));
         if (del < 0) del = 0;
         if (del > 604800) del = 604800;
@@ -1040,8 +1113,13 @@ export async function executeTool(
 
       case "unban_member": {
         const guildId = str(args.guild_id);
-        const userId = str(args.user_id);
-        if (!guildId || !userId) return { ok: false, error: "guild_id and user_id required" };
+        const userIdInput = str(args.user_id);
+        if (!guildId || !userIdInput) return { ok: false, error: "guild_id and user_id required" };
+        // Resolve user ID (handles names like "jamie" -> bot ID)
+        const userId = await resolveUserId(guildId, userIdInput);
+        if (!userId) {
+          return { ok: false, error: `Could not resolve user ID from "${userIdInput}"` };
+        }
         await unbanMember(guildId, userId);
         return { ok: true, result: { unbanned: userId } };
       }

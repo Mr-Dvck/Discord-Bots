@@ -1,11 +1,23 @@
 import { NextResponse } from "next/server";
 import { createChannel, deleteChannel, modifyChannel } from "@/lib/discord";
 
+function isValidSnowflake(id: string): boolean {
+  return /^\d{17,20}$/.test(id.trim());
+}
+
 export async function POST(
   req: Request,
   { params }: { params: Promise<{ id: string }> }
 ) {
   const { id } = await params;
+
+  // Validate guild_id is a proper snowflake (not a channel ID)
+  if (!isValidSnowflake(id)) {
+    return NextResponse.json({
+      error: `Invalid server ID "${id}". Must be a 17-20 digit server snowflake, not a channel ID.`
+    }, { status: 400 });
+  }
+
   try {
     const body = await req.json();
     const channel = await createChannel(id, body);
@@ -20,6 +32,14 @@ export async function PATCH(
   { params }: { params: Promise<{ id: string }> }
 ) {
   const { id } = await params;
+
+  // Validate guild_id is a proper snowflake (not a channel ID)
+  if (!isValidSnowflake(id)) {
+    return NextResponse.json({
+      error: `Invalid server ID "${id}". Must be a 17-20 digit server snowflake, not a channel ID.`
+    }, { status: 400 });
+  }
+
   try {
     const body = await req.json();
     const { channelId, ...data } = body;
@@ -35,6 +55,14 @@ export async function DELETE(
   { params }: { params: Promise<{ id: string }> }
 ) {
   const { id } = await params;
+
+  // Validate guild_id is a proper snowflake (not a channel ID)
+  if (!isValidSnowflake(id)) {
+    return NextResponse.json({
+      error: `Invalid server ID "${id}". Must be a 17-20 digit server snowflake, not a channel ID.`
+    }, { status: 400 });
+  }
+
   try {
     const body = await req.json();
     const { channelId } = body;

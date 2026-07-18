@@ -29,6 +29,21 @@ async function discordFetch(path: string, method: string = "GET", body?: unknown
   return res.json();
 }
 
+// ── Bot identity ──────────────────────────────────────────────────
+
+let _botUserCache: { id: string; username: string } | null = null;
+
+export async function getBotUser(): Promise<{ id: string; username: string }> {
+  if (_botUserCache) return _botUserCache;
+  const me = await discordFetch("/users/@me");
+  const bot = {
+    id: String(me.id),
+    username: String(me.username || me.global_name || "jamie"),
+  };
+  _botUserCache = bot;
+  return bot;
+}
+
 // ── Guild operations ──────────────────────────────────────────────
 
 export async function getGuilds() {

@@ -47,7 +47,9 @@ const TYPE_LABELS: Record<number, string> = {
 
 export default function ServerDetailPage() {
   const params = useParams();
-  const guildId = params.id as string;
+  const rawGuildId = params.id as string;
+  // Validate guildId is a proper snowflake (17-20 digits)
+  const guildId = /^\d{17,20}$/.test(rawGuildId) ? rawGuildId : "";
   const [data, setData] = useState<GuildData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -66,6 +68,11 @@ export default function ServerDetailPage() {
   const [creatingRole, setCreatingRole] = useState(false);
 
   useEffect(() => {
+    if (!guildId) {
+      setError("Invalid server ID. Please check the URL and try again.");
+      setLoading(false);
+      return;
+    }
     fetch(`/api/guilds/${guildId}`)
       .then((r) => r.json())
       .then((d) => {
