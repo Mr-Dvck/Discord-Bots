@@ -65,16 +65,8 @@ class MusicCog(commands.Cog):
         try:
             voice_client = await target_channel.connect()
             self.voice_connections[interaction.guild.id] = voice_client
-            
-            embed = discord.Embed(
-                title="🎵 Joined Voice Channel",
-                description=f"Connected to {target_channel.mention}",
-                color=0x39B7C4,
-            )
-            footer_text = "Note: I will join to take up space (no speaking)"
-            embed.set_footer(text=footer_text)
-            
-            await interaction.followup.send(embed=embed)
+            # No message sent - Jamie joins silently
+            await interaction.followup.send("", ephemeral=True)
             
         except Exception as e:
             log.exception("Failed to join voice channel")
