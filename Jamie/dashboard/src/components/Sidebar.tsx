@@ -13,6 +13,7 @@ const NAV_ITEMS = [
   { href: "/images", label: "Images", icon: "🎨" },
   { href: "/commands", label: "Commands", icon: "⌨️" },
   { href: "/modules", label: "Modules", icon: "⚙️" },
+  { href: "/knowledge-base", label: "Knowledge Base", icon: "📚" },
 ];
 
 export default function Sidebar() {
