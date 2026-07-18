@@ -382,6 +382,60 @@ class ManageCog(commands.GroupCog, group_name="manage"):
         except discord.HTTPException as e:
             await interaction.followup.send(f"Failed to create emoji: {e}", ephemeral=True)
 
+    @app_commands.command(name="announce_onboarding", description="Send onboarding announcement to a channel")
+    @app_commands.describe(channel="Channel to send announcement to")
+    @admin_check()
+    async def announce_onboarding(self, interaction: discord.Interaction, channel: discord.TextChannel):
+        """Send an announcement about the new onboarding feature."""
+        await interaction.response.defer(ephemeral=True)
+
+        embed = discord.Embed(
+            title="🤖 Jamie is New & Improved!",
+            description="I've been upgraded with a powerful new **Onboarding System** that helps me get to know you better!",
+            color=discord.Color.purple()
+        )
+        embed.add_field(
+            name="✨ What's New?",
+            value="• **Personalized AI Profile** - I'll learn your personality, interests, and preferences\n"
+                  "• **Pond Pass Role** - Get exclusive access to secret channels\n"
+                  "• **Admin Insights** - Server admins can view your onboarding results",
+            inline=False
+        )
+        embed.add_field(
+            name="📝 How to Start?",
+            value="Just run `/apply` in any channel or click the button below to begin!\n\n"
+                  "It's quick, fun, and helps me become your personal AI companion.",
+            inline=False
+        )
+        embed.set_footer(text="Your onboarding results are visible to admins only.")
+
+        view = discord.ui.View()
+        button = discord.ui.Button(
+            label="📝 Start Onboarding Now",
+            style=discord.ButtonStyle.primary,
+            emoji="📝",
+            url="https://discord.com/channels/{guild_id}/{channel_id}/{message_id}"  # Will be replaced
+        )
+
+        # Create a temporary message to get the link
+        temp_msg = await channel.send(embed=embed, view=view)
+        
+        # Update button with actual link
+        view = discord.ui.View()
+        button = discord.ui.Button(
+            label="📝 Start Onboarding Now",
+            style=discord.ButtonStyle.primary,
+            emoji="📝",
+            url=f"https://discord.com/channels/{interaction.guild.id}/{channel.id}/{temp_msg.id}"
+        )
+        view.add_item(button)
+        await temp_msg.edit(embed=embed, view=view)
+
+        await interaction.followup.send(
+            f"✅ Announcement sent to {channel.mention}",
+            ephemeral=True
+        )
+
 
 async def setup(bot: commands.Bot):
     await bot.add_cog(ManageCog(bot))

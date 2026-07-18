@@ -1152,3 +1152,5 @@ discord.errors.HTTPException: 400 Bad Request (error code: 50006): Cannot send a
 11:06:05 [jamie.memory] INFO: Running personality analysis cycle
 11:06:05 [jamie.memory] INFO: Running memory prune cycle
 11:36:05 [jamie.memory] INFO: Running personality analysis cycle
+12:06:05 [jamie.memory] INFO: Running personality analysis cycle
+12:06:05 [jamie.memory] INFO: Running memory prune cycle
